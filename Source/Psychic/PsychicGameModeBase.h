@@ -14,4 +14,7 @@ class PSYCHIC_API APsychicGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
 	
+public:
+	APsychicGameModeBase();
+
 };
