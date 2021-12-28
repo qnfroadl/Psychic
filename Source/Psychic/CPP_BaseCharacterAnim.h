@@ -14,4 +14,23 @@ class PSYCHIC_API UCPP_BaseCharacterAnim : public UAnimInstance
 {
 	GENERATED_BODY()
 	
+public:
+	UCPP_BaseCharacterAnim();
+
+	void NativeBeginPlay() override;
+	void NativeUpdateAnimation(float DeltaSeconds) override;
+
+public:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	float Speed;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	float Direction;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	float AimPitch;
+
+private:
+	class ACPP_BaseCharacter* BaseCharacter;
+
 };
