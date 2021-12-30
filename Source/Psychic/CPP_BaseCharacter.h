@@ -32,6 +32,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UCameraComponent* Camera;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UStaticMeshComponent* Gun;
+
 	UFUNCTION()
 	void OnMoveForward(float AxisValue);
 
@@ -44,43 +47,78 @@ public:
 	UFUNCTION()
 	void OnTurn(float AxisValue);
 
-	UFUNCTION()
-	void OnRun();
+	// OnSprint
 	UFUNCTION(Server, Reliable)
-	void CS_OnRun();
-	void CS_OnRun_Implementation();
+	void CS_OnSprint();
+	void CS_OnSprint_Implementation();
 	UFUNCTION(NetMulticast, Reliable)
-	void MC_OnRun();
-	void MC_OnRun_Implementation();
+	void MC_OnSprint();
+	void MC_OnSprint_Implementation();
 
-	UFUNCTION()
-	void OffRun();
+	// OffSprint
 	UFUNCTION(Server, Reliable)
-	void CS_OffRun();
-	void CS_OffRun_Implementation();
+	void CS_OffSprint();
+	void CS_OffSprint_Implementation();
 	UFUNCTION(NetMulticast, Reliable)
-	void MC_OffRun();
-	void MC_OffRun_Implementation();
+	void MC_OffSprint();
+	void MC_OffSprint_Implementation();
 
-	UFUNCTION()
-	void OnWalk();
+	void UpdateSprintState(bool Sprint);
+
+	// OnWalk
+// 	UFUNCTION(Server, Reliable)
+// 	void CS_OnWalk();
+// 	void CS_OnWalk_Implementation();
+// 	UFUNCTION(NetMulticast, Reliable)
+// 	void MC_OnWalk();
+// 	void MC_OnWalk_Implementation();
+
+	// OffWalk
+// 	UFUNCTION(Server, Reliable)
+// 	void CS_OffWalk();
+// 	void CS_OffWalk_Implementation();
+// 	UFUNCTION(NetMulticast, Reliable)
+// 	void MC_OffWalk();
+// 	void MC_OffWalk_Implementation();
+
+	void UpdateMoveSpeed();
+
+	// OnCrouch
 	UFUNCTION(Server, Reliable)
-	void CS_OnWalk();
-	void CS_OnWalk_Implementation();
+	void CS_OnCrouch();
+	void CS_OnCrouch_Implementation();
 	UFUNCTION(NetMulticast, Reliable)
-	void MC_OnWalk();
-	void MC_OnWalk_Implementation();
+	void MC_OnCrouch();
+	void MC_OnCrouch_Implementation();
 
-	UFUNCTION()
-	void OffWalk();
+	// OffCrouch
 	UFUNCTION(Server, Reliable)
-	void CS_OffWalk();
-	void CS_OffWalk_Implementation();
+	void CS_OffCrouch();
+	void CS_OffCrouch_Implementation();
 	UFUNCTION(NetMulticast, Reliable)
-	void MC_OffWalk();
-	void MC_OffWalk_Implementation();
+	void MC_OffCrouch();
+	void MC_OffCrouch_Implementation();
 
-	void MoveSpeedUpdate();
+	void UpdateCrouchState(bool Crouch);
+
+	// OnWalk
+	UFUNCTION(Server, Reliable)
+	void CS_OnIronsights();
+	void CS_OnIronsights_Implementation();
+	UFUNCTION(NetMulticast, Reliable)
+	void MC_OnIronsights();
+	void MC_OnIronsights_Implementation();
+
+	// OffWalk
+	UFUNCTION(Server, Reliable)
+	void CS_OffIronsights();
+	void CS_OffIronsights_Implementation();
+	UFUNCTION(NetMulticast, Reliable)
+	void MC_OffIronsights();
+	void MC_OffIronsights_Implementation();
+
+	void UpdateIronsightsState(bool Ironsights);
+
 
 	UFUNCTION(Server, Reliable)
 	void CS_UpdateControlRotation(const FRotator& rotator);
@@ -94,15 +132,21 @@ public:
 	const FVector NormalSocketOffset = FVector(0, 140, 70);
 	const float NormalFOV = 90.f;
 
-	bool bRun;
-	bool bWalk;
+	bool bSprint = false;
+	bool bIronsights = false;
+	bool bCrouch = false;
+	
+	//test.
+	bool bWalk = false;
 
 	FRotator ControlRotation;	// Client에서 입력한 로테이션값
 
 private:
-	constexpr static float RUNSPEED = 600.f;
-	constexpr static float MOVESPEED = 300.f;
+	constexpr static float SPRINTSPEED = 500.f;
+	constexpr static float JOGSPEED = 250.f;
 	constexpr static float WALKSPEED = 150.f;
-	constexpr static float CROUCHSPEED = 150.f;
-	
+	constexpr static float CROUCHSPEED = 100.f;
+
+	class ACPP_BasePlayerState* PlayerState = nullptr;
+	class UCPP_BaseCharacterAnim* AnimInstance = nullptr;
 };

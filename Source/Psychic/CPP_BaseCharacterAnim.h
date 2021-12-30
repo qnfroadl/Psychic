@@ -30,6 +30,15 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	float AimPitch;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	bool bIronSight;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	bool bSprint;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	bool bCrouch;
+
 private:
 	class ACPP_BaseCharacter* BaseCharacter;
 
