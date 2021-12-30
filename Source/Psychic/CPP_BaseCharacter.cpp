@@ -13,6 +13,7 @@
 
 #include "CPP_BaseCharacterAnim.h"
 #include "CPP_BasePlayerState.h"
+#include "CPP_BaseGun.h"
 
 // Sets default values
 ACPP_BaseCharacter::ACPP_BaseCharacter()
@@ -43,15 +44,15 @@ ACPP_BaseCharacter::ACPP_BaseCharacter()
 	Camera->SetFieldOfView(this->NormalFOV);
 
 	// Set Gun StaticMesh.
-	Gun = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Gun"));
-	ConstructorHelpers::FObjectFinder<UStaticMesh> SM_GUN(TEXT("StaticMesh'/Game/FPS_Weapon_Bundle/Weapons/Meshes/KA74U/SM_KA74U_X.SM_KA74U_X'"));
-	if (SM_GUN.Succeeded())
-	{
-		Gun->SetStaticMesh(SM_GUN.Object);
-		Gun->SetupAttachment(GetMesh(), TEXT("GunSocket"));
-		Gun->SetSimulatePhysics(false);
-		Gun->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
-	}
+// 	Gun = CreateDefaultSubobject<UCPP_BaseGun>(TEXT("Gun"));
+// 	ConstructorHelpers::FObjectFinder<UStaticMesh> SM_GUN(TEXT("StaticMesh'/Game/FPS_Weapon_Bundle/Weapons/Meshes/KA74U/SM_KA74U_X.SM_KA74U_X'"));
+// 	if (SM_GUN.Succeeded())
+// 	{
+		//Gun->SetStaticMesh(SM_GUN.Object);
+		//Gun->SetupAttachment(GetMesh(), TEXT("GunSocket"));
+		//Gun->SetSimulatePhysics(false);
+		//Gun->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+//	}
 	
 	// Set Character.
 	bUseControllerRotationYaw = true;
@@ -65,7 +66,6 @@ ACPP_BaseCharacter::ACPP_BaseCharacter()
 	
 	// Set CharacterMovement;
 	GetCharacterMovement()->MaxWalkSpeed = JOGSPEED;
-
 	
 }
 
@@ -89,6 +89,21 @@ void ACPP_BaseCharacter::BeginPlay()
 	{
 		AnimInstance = Cast<UCPP_BaseCharacterAnim>(mesh->GetAnimInstance());
 	}
+
+
+	// Create Default Weapon(Gun)
+	FActorSpawnParameters param;
+	param.Owner = this;
+	param.Instigator = this;
+	param.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	FTransform transform;
+	
+	Gun = GetWorld()->SpawnActor<ACPP_BaseGun>(ACPP_BaseGun::StaticClass(), transform, param);
+// 	
+// 	FAttachmentTransformRules rules(EAttachmentRule::SnapToTarget)
+
+	Gun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("GunSocket"));
 }
 
 // Called every frame
@@ -129,6 +144,9 @@ void ACPP_BaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	PlayerInputComponent->BindAction(TEXT("Ironsights"), IE_Pressed, this, &ACPP_BaseCharacter::CS_OnIronsights);
 	PlayerInputComponent->BindAction(TEXT("Ironsights"), IE_Released, this, &ACPP_BaseCharacter::CS_OffIronsights);
 	
+	PlayerInputComponent->BindAction(TEXT("Fire"), IE_Pressed, this, &ACPP_BaseCharacter::CS_OnFire);
+	PlayerInputComponent->BindAction(TEXT("Fire"), IE_Released, this, &ACPP_BaseCharacter::CS_OffFire);
+
 }
 
 void ACPP_BaseCharacter::OnMoveForward(float AxisValue)
@@ -330,6 +348,28 @@ void ACPP_BaseCharacter::UpdateIronsightsState(bool Ironsights)
 	{
 		AnimInstance->bIronSight = this->bIronsights;
 	}
+}
+
+void ACPP_BaseCharacter::CS_OnFire_Implementation()
+{
+	MC_OnFire();
+}
+
+void ACPP_BaseCharacter::MC_OnFire_Implementation()
+{
+	UE_LOG(LogTemp, Warning, TEXT(__FUNCTION__));
+	// Gun->OnFire();
+
+}
+
+void ACPP_BaseCharacter::CS_OffFire_Implementation()
+{
+	MC_OffFire();
+}
+
+void ACPP_BaseCharacter::MC_OffFire_Implementation()
+{
+	// Gun->OffFire();
 }
 
 void ACPP_BaseCharacter::CS_UpdateControlRotation_Implementation(const FRotator& rotation)

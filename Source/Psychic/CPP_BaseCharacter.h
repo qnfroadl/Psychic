@@ -31,9 +31,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UCameraComponent* Camera;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class UStaticMeshComponent* Gun;
+// 
+// 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+// 	class ACPP_BaseGun* Gun;
 
 	UFUNCTION()
 	void OnMoveForward(float AxisValue);
@@ -119,6 +119,22 @@ public:
 
 	void UpdateIronsightsState(bool Ironsights);
 
+	// OnFire
+	UFUNCTION(Server, Reliable)
+	void CS_OnFire();
+	void CS_OnFire_Implementation();
+	UFUNCTION(NetMulticast, Reliable)
+	void MC_OnFire();
+	void MC_OnFire_Implementation();
+
+	// OffFire
+	UFUNCTION(Server, Reliable)
+	void CS_OffFire();
+	void CS_OffFire_Implementation();
+	UFUNCTION(NetMulticast, Reliable)
+	void MC_OffFire();
+	void MC_OffFire_Implementation();
+
 
 	UFUNCTION(Server, Reliable)
 	void CS_UpdateControlRotation(const FRotator& rotator);
@@ -129,7 +145,7 @@ public:
 	void MC_UpdateControlRotation_Implementation(const FRotator& rotation);
 
 public:
-	const FVector NormalSocketOffset = FVector(0, 140, 70);
+	const FVector NormalSocketOffset = FVector(0, 70, 70);
 	const float NormalFOV = 90.f;
 
 	bool bSprint = false;
@@ -142,11 +158,13 @@ public:
 	FRotator ControlRotation;	// Client에서 입력한 로테이션값
 
 private:
-	constexpr static float SPRINTSPEED = 500.f;
+	constexpr static float SPRINTSPEED = 450.f;
 	constexpr static float JOGSPEED = 250.f;
 	constexpr static float WALKSPEED = 150.f;
 	constexpr static float CROUCHSPEED = 100.f;
 
 	class ACPP_BasePlayerState* PlayerState = nullptr;
 	class UCPP_BaseCharacterAnim* AnimInstance = nullptr;
+	class ACPP_BaseGun* Gun = nullptr;
+
 };
