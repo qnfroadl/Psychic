@@ -8,6 +8,7 @@
 
 // Sets default values
 ACPP_BaseGun::ACPP_BaseGun()
+:CurrentAmmo(0), RemainingAmmo(0), MaxMagazine(0)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -21,10 +22,8 @@ ACPP_BaseGun::ACPP_BaseGun()
 		this->Gun->SetStaticMesh(SM_BASEGUN.Object);
 	}
 
-	// ing...
 	// Set CollisionPreset.
 	this->Gun->SetCollisionProfileName(TEXT("CharacterMesh"));
-
 
 
 

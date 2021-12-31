@@ -31,8 +31,10 @@ ACPP_BaseCharacter::ACPP_BaseCharacter()
 	}
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>("SpringArm");
-	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
+	TPPCamera = CreateDefaultSubobject<UCameraComponent>("TPPCamera");
+	FPPCamera = CreateDefaultSubobject<UCameraComponent>("FPPCamera");
 	
+
 	// Set SpringArm.
 	SpringArm->SetupAttachment(GetRootComponent());
 	SpringArm->SetRelativeRotation(FRotator(-20, 0, 0));
@@ -40,8 +42,10 @@ ACPP_BaseCharacter::ACPP_BaseCharacter()
 	SpringArm->SocketOffset = this->NormalSocketOffset;
 
 	// Set Camera.
-	Camera->SetupAttachment(SpringArm);
-	Camera->SetFieldOfView(this->NormalFOV);
+	TPPCamera->SetupAttachment(SpringArm);
+	FPPCamera->SetupAttachment(GetMesh(), TEXT("head"));
+	FPPCamera->SetRelativeRotation(FRotator(0.f, 90.f, -90.f));
+	FPPCamera->bUsePawnControlRotation = true;	// 안하면 머리 따라서 흔들림.
 
 	// Set Gun StaticMesh.
 // 	Gun = CreateDefaultSubobject<UCPP_BaseGun>(TEXT("Gun"));
@@ -64,9 +68,9 @@ ACPP_BaseCharacter::ACPP_BaseCharacter()
 		GetMesh()->SetAnimInstanceClass(ABP_ANIM.Class);
 	}
 	
-	// Set CharacterMovement;
+	// Set CharacterMovement.
 	GetCharacterMovement()->MaxWalkSpeed = JOGSPEED;
-	
+
 }
 
 // Called when the game starts or when spawned
@@ -117,8 +121,9 @@ void ACPP_BaseCharacter::Tick(float DeltaTime)
 	}
 	else {
 		// GetMesh()->SetWorldRotation(this->ControlRotation);
-		Camera->SetWorldRotation(this->ControlRotation);
+		// TPPCamera->SetWorldRotation(this->ControlRotation);
 	}
+
 }
 
 // Called to bind functionality to input
@@ -146,6 +151,9 @@ void ACPP_BaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	
 	PlayerInputComponent->BindAction(TEXT("Fire"), IE_Pressed, this, &ACPP_BaseCharacter::CS_OnFire);
 	PlayerInputComponent->BindAction(TEXT("Fire"), IE_Released, this, &ACPP_BaseCharacter::CS_OffFire);
+
+	PlayerInputComponent->BindAction(TEXT("Prespective"), IE_Pressed, this, &ACPP_BaseCharacter::TogglePrespective);
+	
 
 }
 
@@ -181,12 +189,12 @@ void ACPP_BaseCharacter::CS_OnSprint_Implementation()
 }
 void ACPP_BaseCharacter::MC_OnSprint_Implementation()
 {
-	UpdateCrouchState(false);
-	UpdateIronsightsState(false);
+	if(IsCrouch()) { UpdateCrouchState(false);}
+	if(IsIronsights()){	UpdateIronsightsState(false);}
+	
 	UpdateSprintState(true);
 
 	UpdateMoveSpeed();
-
 }
 
 void ACPP_BaseCharacter::CS_OffSprint_Implementation()
@@ -196,7 +204,6 @@ void ACPP_BaseCharacter::CS_OffSprint_Implementation()
 
 void ACPP_BaseCharacter::MC_OffSprint_Implementation()
 {
-	bSprint = false;
 	UpdateMoveSpeed();
 	UpdateSprintState(false);
 }
@@ -271,7 +278,8 @@ void ACPP_BaseCharacter::CS_OnCrouch_Implementation()
 
 void ACPP_BaseCharacter::MC_OnCrouch_Implementation()
 {
-	UpdateSprintState(false);
+	if(IsSprint()) {UpdateSprintState(false); }
+
 	if (PlayerState && PlayerState->bCrouchToggleMode)
 	{
 		UpdateCrouchState(!this->bCrouch);
@@ -309,10 +317,9 @@ void ACPP_BaseCharacter::UpdateCrouchState(bool Crouch)
 
 void ACPP_BaseCharacter::CS_OnIronsights_Implementation()
 {
-	if (false == bSprint)
-	{
-		MC_OnIronsights();
-	}
+	if(IsSprint()) {UpdateSprintState(false);}
+
+	MC_OnIronsights();
 }
 
 void ACPP_BaseCharacter::MC_OnIronsights_Implementation()
@@ -380,4 +387,14 @@ void ACPP_BaseCharacter::CS_UpdateControlRotation_Implementation(const FRotator&
 void ACPP_BaseCharacter::MC_UpdateControlRotation_Implementation(const FRotator& rotation)
 {
 	this->ControlRotation = rotation;
+}
+
+void ACPP_BaseCharacter::TogglePrespective()
+{
+	bFPP = !bFPP;
+
+	TPPCamera->SetActive(!bFPP);
+	FPPCamera->SetActive(bFPP);
+
+	bUseControllerRotationYaw = true;
 }

@@ -30,7 +30,11 @@ public:
 	class USpringArmComponent* SpringArm;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class UCameraComponent* Camera;
+	class UCameraComponent* TPPCamera;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UCameraComponent* FPPCamera;
+
 // 
 // 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 // 	class ACPP_BaseGun* Gun;
@@ -144,14 +148,21 @@ public:
 	void MC_UpdateControlRotation(const FRotator& rotation);
 	void MC_UpdateControlRotation_Implementation(const FRotator& rotation);
 
+	void TogglePrespective();
+
+
+	bool IsSprint() {return this->bSprint;}
+	bool IsIronsights() {return this->bIronsights;}
+	bool IsCrouch() { return this->bCrouch;}
+
 public:
 	const FVector NormalSocketOffset = FVector(0, 70, 70);
-	const float NormalFOV = 90.f;
 
 	bool bSprint = false;
 	bool bIronsights = false;
 	bool bCrouch = false;
-	
+	bool bFPP = false;
+
 	//test.
 	bool bWalk = false;
 

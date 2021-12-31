@@ -33,11 +33,13 @@ public:
 // 
 // 	bool OnReload();
 
-	UPROPERTY()
-	int CurrentBullet = 30;
-	int RemainingBullet = 90;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	int CurrentAmmo;
 
-	UPROPERTY()
-	int MaxMagazine = 30;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	int RemainingAmmo;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	int MaxMagazine;
 
 };
