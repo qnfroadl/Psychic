@@ -101,12 +101,11 @@ void ACPP_BaseCharacter::BeginPlay()
 	param.Instigator = this;
 	param.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	FTransform transform;
-	
-	Gun = GetWorld()->SpawnActor<ACPP_BaseGun>(ACPP_BaseGun::StaticClass(), transform, param);
-// 	
-// 	FAttachmentTransformRules rules(EAttachmentRule::SnapToTarget)
 
+
+	// testing...
+	FTransform transform;
+	Gun = GetWorld()->SpawnActor<ACPP_BaseGun>(ACPP_BaseGun::StaticClass(), transform, param);
 	Gun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("GunSocket"));
 }
 
@@ -207,31 +206,6 @@ void ACPP_BaseCharacter::MC_OffSprint_Implementation()
 	UpdateMoveSpeed();
 	UpdateSprintState(false);
 }
-
-// void ACPP_BaseCharacter::CS_OnWalk_Implementation()
-// {
-// 	MC_OnWalk();
-// }
-// 
-// void ACPP_BaseCharacter::MC_OnWalk_Implementation()
-// {
-// 	bWalk = true;
-// 	bSprint = false;
-// 	UpdateMoveSpeed();
-// 	UpdateMoveState();
-// }
-// 
-// void ACPP_BaseCharacter::CS_OffWalk_Implementation()
-// {
-// 	MC_OffWalk();
-// }
-// 
-// void ACPP_BaseCharacter::MC_OffWalk_Implementation()
-// {
-// 	bWalk = false;
-// 	UpdateMoveSpeed();
-// 	UpdateMoveState();
-// }
 
 void ACPP_BaseCharacter::UpdateMoveSpeed()
 {
@@ -365,7 +339,10 @@ void ACPP_BaseCharacter::CS_OnFire_Implementation()
 void ACPP_BaseCharacter::MC_OnFire_Implementation()
 {
 	UE_LOG(LogTemp, Warning, TEXT(__FUNCTION__));
-	// Gun->OnFire();
+
+	FVector Forward = TPPCamera->GetForwardVector();
+
+	Gun->OnFire(Forward + 1000, 1000);
 
 }
 

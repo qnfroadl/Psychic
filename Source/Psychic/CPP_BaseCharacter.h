@@ -69,22 +69,6 @@ public:
 
 	void UpdateSprintState(bool Sprint);
 
-	// OnWalk
-// 	UFUNCTION(Server, Reliable)
-// 	void CS_OnWalk();
-// 	void CS_OnWalk_Implementation();
-// 	UFUNCTION(NetMulticast, Reliable)
-// 	void MC_OnWalk();
-// 	void MC_OnWalk_Implementation();
-
-	// OffWalk
-// 	UFUNCTION(Server, Reliable)
-// 	void CS_OffWalk();
-// 	void CS_OffWalk_Implementation();
-// 	UFUNCTION(NetMulticast, Reliable)
-// 	void MC_OffWalk();
-// 	void MC_OffWalk_Implementation();
-
 	void UpdateMoveSpeed();
 
 	// OnCrouch

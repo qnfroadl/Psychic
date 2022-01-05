@@ -26,10 +26,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UStaticMeshComponent* Gun;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class USceneComponent* Muzzle;
+	class UParticleSystem* Explosion;
+// 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+// 	class USceneComponent* Muzzle;
 // 
-// 	bool OnFire(const FVector& EndLocation);
+	/** Muzzle에서 EndLocation 까지 발사.*/
+ 	bool OnFire(const FVector& EndLocation, float Distance);
 // 
 // 	bool OnReload();
 
