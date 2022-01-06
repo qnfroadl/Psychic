@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "CPP_BaseGun.generated.h"
 
+class ACPP_BaseCharacter;
+
 UCLASS()
 class PSYCHIC_API ACPP_BaseGun : public AActor
 {
@@ -31,7 +33,14 @@ public:
 // 	class USceneComponent* Muzzle;
 // 
 	/** Muzzle에서 EndLocation 까지 발사.*/
- 	bool OnFire(const FVector& EndLocation, float Distance);
+ 	void OnFire(const FVector& EndLocation, float Distance);
+
+	UFUNCTION(Server, Reliable)
+	void CS_FireProjectile(FVector StartLocation, FVector_NetQuantizeNormal Direction);
+
+	void OnFireEffect();
+
+	void SetOwningPawn(ACPP_BaseCharacter* NewOwner);
 // 
 // 	bool OnReload();
 
@@ -44,4 +53,8 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	int MaxMagazine;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	FName MuzzleSocketName;
+
+	ACPP_BaseCharacter* BaseCharacter;
 };

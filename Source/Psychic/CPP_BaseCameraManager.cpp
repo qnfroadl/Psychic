@@ -12,9 +12,9 @@ ACPP_BaseCameraManager::ACPP_BaseCameraManager()
 	NormalFOV = 90.0f;
 	IronsightsFOV = 60.0f;
 
-	// 1ÀÎÄª ´ëºñ.
-	// ViewPitchMax;
-	// ViewPitchMin;
+	
+	ViewPitchMax = 75.f;
+	ViewPitchMin = -75.f;
 
 }
 

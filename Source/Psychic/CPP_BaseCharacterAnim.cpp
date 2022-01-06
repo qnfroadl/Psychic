@@ -30,7 +30,7 @@ void UCPP_BaseCharacterAnim::NativeUpdateAnimation(float DeltaSeconds)
 		this->Direction = CalculateDirection(Vel, BaseCharacter->GetActorRotation());
 		this->AimPitch = FMath::ClampAngle(BaseCharacter->ControlRotation.Pitch, -90, 90);
 
-		UE_LOG(LogTemp, Warning, TEXT("pitch: %lf"), AimPitch);
+		// UE_LOG(LogTemp, Warning, TEXT("pitch: %lf"), AimPitch);
 		// UE_LOG(LogTemp, Warning, TEXT("%lf"), this->Speed);
 	}
 }

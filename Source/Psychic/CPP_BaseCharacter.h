@@ -134,13 +134,16 @@ public:
 
 	void TogglePrespective();
 
-
 	bool IsSprint() {return this->bSprint;}
 	bool IsIronsights() {return this->bIronsights;}
 	bool IsCrouch() { return this->bCrouch;}
 
+	UCameraComponent* GetCurrentCamera();
+	FVector GetCameraLocation();
+	FVector GetCameraForward();
+
 public:
-	const FVector NormalSocketOffset = FVector(0, 70, 70);
+	const FVector NormalSocketOffset = FVector(0, 40, 70);
 
 	bool bSprint = false;
 	bool bIronsights = false;

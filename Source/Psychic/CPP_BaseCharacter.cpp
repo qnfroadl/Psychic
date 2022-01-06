@@ -36,16 +36,21 @@ ACPP_BaseCharacter::ACPP_BaseCharacter()
 	
 
 	// Set SpringArm.
-	SpringArm->SetupAttachment(GetRootComponent());
+	SpringArm->SetupAttachment(GetMesh());
+	SpringArm->SetRelativeLocation(FVector(0.f,0.f,100.f));
 	SpringArm->SetRelativeRotation(FRotator(-20, 0, 0));
 	SpringArm->bUsePawnControlRotation = true;
+	SpringArm->TargetArmLength = 250.f;
 	SpringArm->SocketOffset = this->NormalSocketOffset;
 
 	// Set Camera.
 	TPPCamera->SetupAttachment(SpringArm);
+
 	FPPCamera->SetupAttachment(GetMesh(), TEXT("head"));
 	FPPCamera->SetRelativeRotation(FRotator(0.f, 90.f, -90.f));
+	FPPCamera->SetRelativeLocation(FVector(-5.f, 30.f, 0.f));
 	FPPCamera->bUsePawnControlRotation = true;	// 안하면 머리 따라서 흔들림.
+
 
 	// Set Gun StaticMesh.
 // 	Gun = CreateDefaultSubobject<UCPP_BaseGun>(TEXT("Gun"));
@@ -106,6 +111,7 @@ void ACPP_BaseCharacter::BeginPlay()
 	// testing...
 	FTransform transform;
 	Gun = GetWorld()->SpawnActor<ACPP_BaseGun>(ACPP_BaseGun::StaticClass(), transform, param);
+	Gun->SetOwner(this);
 	Gun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("GunSocket"));
 }
 
@@ -153,7 +159,6 @@ void ACPP_BaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 	PlayerInputComponent->BindAction(TEXT("Prespective"), IE_Pressed, this, &ACPP_BaseCharacter::TogglePrespective);
 	
-
 }
 
 void ACPP_BaseCharacter::OnMoveForward(float AxisValue)
@@ -374,4 +379,20 @@ void ACPP_BaseCharacter::TogglePrespective()
 	FPPCamera->SetActive(bFPP);
 
 	bUseControllerRotationYaw = true;
+}
+
+UCameraComponent* ACPP_BaseCharacter::GetCurrentCamera()
+{
+	return bFPP? FPPCamera : TPPCamera;
+}
+
+FVector ACPP_BaseCharacter::GetCameraLocation()
+{
+	return GetCurrentCamera()->GetComponentLocation();
+
+}
+
+FVector ACPP_BaseCharacter::GetCameraForward()
+{
+	return GetCurrentCamera()->GetForwardVector();
 }
