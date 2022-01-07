@@ -10,6 +10,7 @@
 #include <Gameframework/CharacterMovementComponent.h>
 #include <Net/UnrealNetwork.h>
 #include <Kismet/KismetMathLibrary.h>
+#include <Net/UnrealNetwork.h>
 
 #include "CPP_BaseCharacterAnim.h"
 #include "CPP_BasePlayerState.h"
@@ -33,14 +34,15 @@ ACPP_BaseCharacter::ACPP_BaseCharacter()
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>("SpringArm");
 	TPPCamera = CreateDefaultSubobject<UCameraComponent>("TPPCamera");
 	FPPCamera = CreateDefaultSubobject<UCameraComponent>("FPPCamera");
-	
+	ScopeCamera = CreateDefaultSubobject<UCameraComponent>("ScopeCamera");
+	ScopeCamera->SetActive(false);
 
 	// Set SpringArm.
 	SpringArm->SetupAttachment(GetMesh());
-	SpringArm->SetRelativeLocation(FVector(0.f,0.f,100.f));
-	SpringArm->SetRelativeRotation(FRotator(-20, 0, 0));
+	SpringArm->SetRelativeLocation(FVector(0.f,0.f,150.f));
+	//SpringArm->SetRelativeRotation(FRotator(0, 0, 0));
 	SpringArm->bUsePawnControlRotation = true;
-	SpringArm->TargetArmLength = 250.f;
+	SpringArm->TargetArmLength = 150.f;
 	SpringArm->SocketOffset = this->NormalSocketOffset;
 
 	// Set Camera.
@@ -76,6 +78,15 @@ ACPP_BaseCharacter::ACPP_BaseCharacter()
 	// Set CharacterMovement.
 	GetCharacterMovement()->MaxWalkSpeed = JOGSPEED;
 
+
+
+
+	// testing...
+	ConstructorHelpers::FClassFinder<ACPP_BaseGun>BP_BASEGUN(TEXT("Blueprint'/Game/Blueprints/BP_BaseGun.BP_BaseGun_C'"));
+	if (BP_BASEGUN.Succeeded())
+	{
+		BaseGunClass = BP_BASEGUN.Class;
+	}
 }
 
 // Called when the game starts or when spawned
@@ -83,35 +94,22 @@ void ACPP_BaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	// SetPlayerState
-	PlayerState = Cast<ACPP_BasePlayerState>(GetPlayerState());
-	if (PlayerState)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayerState"));
-	}
-	else {
-		UE_LOG(LogTemp, Warning, TEXT("PlayerState is nullptr"));
-	}
-
 	USkeletalMeshComponent* mesh = GetMesh();
 	if (mesh)
 	{
 		AnimInstance = Cast<UCPP_BaseCharacterAnim>(mesh->GetAnimInstance());
 	}
 
-
-	// Create Default Weapon(Gun)
+	// Create Default Weapon(Gun) testing...
 	FActorSpawnParameters param;
 	param.Owner = this;
 	param.Instigator = this;
 	param.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 
-
-	// testing...
 	FTransform transform;
-	Gun = GetWorld()->SpawnActor<ACPP_BaseGun>(ACPP_BaseGun::StaticClass(), transform, param);
-	Gun->SetOwner(this);
+	Gun = GetWorld()->SpawnActor<ACPP_BaseGun>(BaseGunClass/*ACPP_BaseGun::StaticClass()*/, transform, param);
+	Gun->SetOwningPawn(this);
 	Gun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("GunSocket"));
 }
 
@@ -145,14 +143,11 @@ void ACPP_BaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	PlayerInputComponent->BindAction(TEXT("Sprint"), IE_Pressed, this, &ACPP_BaseCharacter::CS_OnSprint);
 	PlayerInputComponent->BindAction(TEXT("Sprint"), IE_Released, this, &ACPP_BaseCharacter::CS_OffSprint);
 
-	// PlayerInputComponent->BindAction(TEXT("Walk"), IE_Pressed, this, &ACPP_BaseCharacter::CS_OnWalk);
-	// PlayerInputComponent->BindAction(TEXT("Walk"), IE_Released, this, &ACPP_BaseCharacter::CS_OffWalk);
-
 	PlayerInputComponent->BindAction(TEXT("Crouch"), IE_Pressed, this, &ACPP_BaseCharacter::CS_OnCrouch);
 	PlayerInputComponent->BindAction(TEXT("Crouch"), IE_Released, this, &ACPP_BaseCharacter::CS_OffCrouch);
 
-	PlayerInputComponent->BindAction(TEXT("Ironsights"), IE_Pressed, this, &ACPP_BaseCharacter::CS_OnIronsights);
-	PlayerInputComponent->BindAction(TEXT("Ironsights"), IE_Released, this, &ACPP_BaseCharacter::CS_OffIronsights);
+	PlayerInputComponent->BindAction(TEXT("Ironsights"), IE_Pressed, this, &ACPP_BaseCharacter::OnStartIronsights);
+	PlayerInputComponent->BindAction(TEXT("Ironsights"), IE_Released, this, &ACPP_BaseCharacter::OnStopIronsights);
 	
 	PlayerInputComponent->BindAction(TEXT("Fire"), IE_Pressed, this, &ACPP_BaseCharacter::CS_OnFire);
 	PlayerInputComponent->BindAction(TEXT("Fire"), IE_Released, this, &ACPP_BaseCharacter::CS_OffFire);
@@ -194,7 +189,7 @@ void ACPP_BaseCharacter::CS_OnSprint_Implementation()
 void ACPP_BaseCharacter::MC_OnSprint_Implementation()
 {
 	if(IsCrouch()) { UpdateCrouchState(false);}
-	if(IsIronsights()){	UpdateIronsightsState(false);}
+	// if(IsIronsights()){	UpdateIronsightsState(false);}
 	
 	UpdateSprintState(true);
 
@@ -208,8 +203,9 @@ void ACPP_BaseCharacter::CS_OffSprint_Implementation()
 
 void ACPP_BaseCharacter::MC_OffSprint_Implementation()
 {
-	UpdateMoveSpeed();
 	UpdateSprintState(false);
+	UpdateMoveSpeed();
+
 }
 
 void ACPP_BaseCharacter::UpdateMoveSpeed()
@@ -259,7 +255,7 @@ void ACPP_BaseCharacter::MC_OnCrouch_Implementation()
 {
 	if(IsSprint()) {UpdateSprintState(false); }
 
-	if (PlayerState && PlayerState->bCrouchToggleMode)
+	if (GetBasePlayerState()->bCrouchToggle)
 	{
 		UpdateCrouchState(!this->bCrouch);
 	}
@@ -277,12 +273,11 @@ void ACPP_BaseCharacter::CS_OffCrouch_Implementation()
 
 void ACPP_BaseCharacter::MC_OffCrouch_Implementation()
 {
-	if (PlayerState && !PlayerState->bCrouchToggleMode)
+	if (false == GetBasePlayerState()->bCrouchToggle)
 	{
 		UpdateCrouchState(false);
 	}
 	UpdateMoveSpeed();
-	
 }
 
 void ACPP_BaseCharacter::UpdateCrouchState(bool Crouch)
@@ -294,61 +289,67 @@ void ACPP_BaseCharacter::UpdateCrouchState(bool Crouch)
 	}
 }
 
-void ACPP_BaseCharacter::CS_OnIronsights_Implementation()
+void ACPP_BaseCharacter::OnStartIronsights()
 {
-	if(IsSprint()) {UpdateSprintState(false);}
+	// 조건 체크.
+	SetIronsights(true, GetBasePlayerState()->bSprintToggle);
 
-	MC_OnIronsights();
 }
 
-void ACPP_BaseCharacter::MC_OnIronsights_Implementation()
+void ACPP_BaseCharacter::OnStopIronsights()
 {
-	if (PlayerState && PlayerState->bIronsightsToggleMode)
+	// 조건 체크.
+	SetIronsights(false, GetBasePlayerState()->bSprintToggle);
+
+}
+
+void ACPP_BaseCharacter::SetIronsights(bool bIronsight, bool bToggle)
+{
+	this->bIronsights = bIronsight;
+// 	if (AnimInstance)
+// 	{
+// 		AnimInstance->bIronSight = this->bIronsights;
+// 	}
+
+	if (false == HasAuthority())
 	{
-		UpdateIronsightsState(!bIronsights);
+		ServerSetIronsights(bIronsight, bToggle);
 	}
-	else {
-		UpdateIronsightsState(true);
-	}
-	UpdateMoveSpeed();
 }
 
-void ACPP_BaseCharacter::CS_OffIronsights_Implementation()
+void ACPP_BaseCharacter::ServerSetIronsights_Implementation(bool bIronsight, bool bToggle)
 {
-	MC_OffIronsights();
+	SetIronsights(bIronsight, bToggle);
 }
 
-void ACPP_BaseCharacter::MC_OffIronsights_Implementation()
-{
-	if (PlayerState && !PlayerState->bIronsightsToggleMode)
-	{
-		UpdateIronsightsState(false);
-	}
-	UpdateMoveSpeed();
-}
-
-void ACPP_BaseCharacter::UpdateIronsightsState(bool Ironsights)
-{
-	this->bIronsights = Ironsights;
-	if(AnimInstance)
-	{
-		AnimInstance->bIronSight = this->bIronsights;
-	}
-}
 
 void ACPP_BaseCharacter::CS_OnFire_Implementation()
 {
-	MC_OnFire();
+	// 뛰는중에는 발사 금지.
+	if (IsSprint())
+	{
+		return;
+	}
+
+	const FVector Start = this->GetCameraLocation();
+	const FVector End = Start + (this->GetCameraForward() * 100000.f);
+	FVector AimEndLocation = End;
+
+	FHitResult HitResult;
+	GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility);
+	if (HitResult.bBlockingHit)
+	{
+		AimEndLocation = HitResult.ImpactPoint;
+	}
+
+	MC_OnFire(AimEndLocation);
 }
 
-void ACPP_BaseCharacter::MC_OnFire_Implementation()
+void ACPP_BaseCharacter::MC_OnFire_Implementation(const FVector& EndLocation)
 {
 	UE_LOG(LogTemp, Warning, TEXT(__FUNCTION__));
 
-	FVector Forward = TPPCamera->GetForwardVector();
-
-	Gun->OnFire(Forward + 1000, 1000);
-
+	Gun->OnFire(EndLocation, 1000);
 }
 
 void ACPP_BaseCharacter::CS_OffFire_Implementation()
@@ -389,10 +390,30 @@ UCameraComponent* ACPP_BaseCharacter::GetCurrentCamera()
 FVector ACPP_BaseCharacter::GetCameraLocation()
 {
 	return GetCurrentCamera()->GetComponentLocation();
-
 }
 
 FVector ACPP_BaseCharacter::GetCameraForward()
 {
 	return GetCurrentCamera()->GetForwardVector();
+}
+
+ACPP_BasePlayerState* ACPP_BaseCharacter::GetBasePlayerState()
+{
+	// SetPlayerState
+	if (nullptr == PlayerState)
+	{
+		PlayerState = Cast<ACPP_BasePlayerState>(GetPlayerState());
+	}
+	
+	check(PlayerState);
+
+	return PlayerState;
+}
+
+void ACPP_BaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	
+	DOREPLIFETIME(ACPP_BaseCharacter, bIronsights);
 }

@@ -31,9 +31,9 @@ public:
 	class UParticleSystem* Explosion;
 // 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 // 	class USceneComponent* Muzzle;
-// 
+
 	/** Muzzle에서 EndLocation 까지 발사.*/
- 	void OnFire(const FVector& EndLocation, float Distance);
+ 	void OnFire(const FVector& EndLocation, float Distance = 100000.f);
 
 	UFUNCTION(Server, Reliable)
 	void CS_FireProjectile(FVector StartLocation, FVector_NetQuantizeNormal Direction);
@@ -41,7 +41,7 @@ public:
 	void OnFireEffect();
 
 	void SetOwningPawn(ACPP_BaseCharacter* NewOwner);
-// 
+
 // 	bool OnReload();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
@@ -55,6 +55,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	FName MuzzleSocketName;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	FName ScopeCameraSocketName;
 
 	ACPP_BaseCharacter* BaseCharacter;
 };

@@ -10,7 +10,7 @@
 
 // Sets default values
 ACPP_BaseBullet::ACPP_BaseBullet()
-	:ProjectileSpeed(100.f), bExploded(false)
+	:ProjectileSpeed(1000.f), bExploded(false)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -33,7 +33,7 @@ ACPP_BaseBullet::ACPP_BaseBullet()
 	if (SM_AMMO.Succeeded())
 	{
 		Mesh->SetStaticMesh(SM_AMMO.Object);
-		Mesh->SetRelativeRotation(FRotator(0.f, 90.f, 0.f));
+		Mesh->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
 		Mesh->SetGenerateOverlapEvents(true);
 		Mesh->SetCollisionProfileName(TEXT("OverlapAll"));
 	}
@@ -96,11 +96,6 @@ void ACPP_BaseBullet::OnImpact(const FHitResult& HitResult)
 		// ÀÌÆåÆ® º¸¿©Áú ½Ã°£ ³²±è.
 		SetLifeSpan(2.0f);
 	}
-}
-
-void ACPP_BaseBullet::InitVelocity(FVector& Direction)
-{
-	Projectile->Velocity = Direction * this->ProjectileSpeed;
 }
 
 void ACPP_BaseBullet::OnRep_Exploded()

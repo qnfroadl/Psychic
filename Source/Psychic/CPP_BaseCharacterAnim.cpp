@@ -29,6 +29,8 @@ void UCPP_BaseCharacterAnim::NativeUpdateAnimation(float DeltaSeconds)
 		this->Speed = Vel.Size();
 		this->Direction = CalculateDirection(Vel, BaseCharacter->GetActorRotation());
 		this->AimPitch = FMath::ClampAngle(BaseCharacter->ControlRotation.Pitch, -90, 90);
+		this->bIronSight = BaseCharacter->bIronsights;
+
 
 		// UE_LOG(LogTemp, Warning, TEXT("pitch: %lf"), AimPitch);
 		// UE_LOG(LogTemp, Warning, TEXT("%lf"), this->Speed);

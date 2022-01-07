@@ -38,8 +38,6 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Projectile)
 	float ProjectileSpeed;
 
-	void InitVelocity(FVector& Direction);
-
 	UPROPERTY(ReplicatedUsing = OnRep_Exploded)
 	bool bExploded;
 

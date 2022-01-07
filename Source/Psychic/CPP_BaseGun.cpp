@@ -5,6 +5,7 @@
 
 #include <Components/StaticMeshComponent.h>
 #include <Components/SceneComponent.h>
+#include <Camera/CameraComponent.h>
 #include <Kismet/GameplayStatics.h>
 #include <Particles/ParticleSystem.h>
 #include <Kismet/KismetMathLibrary.h>
@@ -12,10 +13,11 @@
 #include "CPP_BaseCharacter.h"
 #include "CPP_BaseBullet.h"
 
+#include <DrawDebugHelpers.h>
 
 // Sets default values
 ACPP_BaseGun::ACPP_BaseGun()
-:Gun(nullptr), CurrentAmmo(0), RemainingAmmo(0), MaxMagazine(0), MuzzleSocketName(TEXT("Muzzle"))
+:Gun(nullptr), CurrentAmmo(0), RemainingAmmo(0), MaxMagazine(0), MuzzleSocketName(TEXT("Muzzle")), ScopeCameraSocketName(TEXT("ScopeCamera"))
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -31,7 +33,6 @@ ACPP_BaseGun::ACPP_BaseGun()
 	// Set CollisionPreset.
 	this->Gun->SetCollisionProfileName(TEXT("CharacterMesh"));
 
-
 	ConstructorHelpers::FObjectFinder<UParticleSystem> PS_EXPLOSION(TEXT("ParticleSystem'/Game/StarterContent/Particles/P_Explosion.P_Explosion'"));
 	if (PS_EXPLOSION.Succeeded())
 	{
@@ -44,14 +45,12 @@ ACPP_BaseGun::ACPP_BaseGun()
 void ACPP_BaseGun::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 // Called every frame
 void ACPP_BaseGun::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void ACPP_BaseGun::OnFire(const FVector& EndLocation, float Distance)
@@ -59,48 +58,38 @@ void ACPP_BaseGun::OnFire(const FVector& EndLocation, float Distance)
 	OnFireEffect();
 	
 	FVector MuzzleLocation = this->Gun->GetSocketLocation(MuzzleSocketName);
-	FRotator Direction = this->Gun->GetSocketTransform(MuzzleSocketName).Rotator();
+	FVector  Direction;// = this->Gun->GetSocketTransform(MuzzleSocketName).Rotator().Vector();
+	FVector AimEndLocation = EndLocation;
 
-	const float ProjectileAdjustRange = 10000.0f;
+	Direction = UKismetMathLibrary::FindLookAtRotation(MuzzleLocation, AimEndLocation).Vector();
 
-	if (BaseCharacter)
-	{	
-		const FVector Start = BaseCharacter->GetCameraLocation();
-		const FVector End = Start + (BaseCharacter->GetCameraForward() * ProjectileAdjustRange);
-		
-		FHitResult HitResult;
-		GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility);
-
-		Direction = UKismetMathLibrary::FindLookAtRotation(MuzzleLocation, End);
-	}
-
-	CS_FireProjectile(MuzzleLocation, Direction.Vector());
+	CS_FireProjectile(MuzzleLocation, Direction);
 
 }
 
 void ACPP_BaseGun::CS_FireProjectile_Implementation(FVector StartLocation, FVector_NetQuantizeNormal Direction)
 {
-	UE_LOG(LogTemp, Warning, TEXT(__FUNCTION__));
+	FTransform SpawnTM(Direction.Rotation(), StartLocation, FVector(5,5,5));
 
-	StartLocation = StartLocation + Direction * 30;	//testing...
-
-	FTransform SpawnTM(Direction.Rotation(), StartLocation);
 	ACPP_BaseBullet* Bullet = Cast<ACPP_BaseBullet>(UGameplayStatics::BeginDeferredActorSpawnFromClass(this, ACPP_BaseBullet::StaticClass(), SpawnTM));
 	if (Bullet)
 	{
 		Bullet->SetInstigator(GetInstigator());
 		Bullet->SetOwner(this);
-		Bullet->InitVelocity(Direction);
+		// Bullet->InitVelocity(Direction);
 
 		UGameplayStatics::FinishSpawningActor(Bullet, SpawnTM);
-	}
 
+		DrawDebugLine(GetWorld(), StartLocation, StartLocation + Direction * 10000.f, FColor::Blue, false, 10.f, 0, 1.f);
+	}
 }
 
 void ACPP_BaseGun::OnFireEffect()
 {
-	FTransform MuzzleTransform = this->Gun->GetSocketTransform(MuzzleSocketName);
-	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), Explosion, MuzzleTransform, true);
+	//FTransform MuzzleTransform = this->Gun->GetSocketTransform(MuzzleSocketName);
+	FVector MuzzleLocation = this->Gun->GetSocketLocation(MuzzleSocketName);
+
+	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), Explosion, FTransform(FRotator(), MuzzleLocation, FVector(0.1f)), true);
 }
 
 void ACPP_BaseGun::SetOwningPawn(ACPP_BaseCharacter* NewOwner)

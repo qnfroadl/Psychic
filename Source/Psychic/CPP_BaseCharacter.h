@@ -35,6 +35,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UCameraComponent* FPPCamera;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UCameraComponent* ScopeCamera;
+
 // 
 // 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 // 	class ACPP_BaseGun* Gun;
@@ -89,31 +92,26 @@ public:
 
 	void UpdateCrouchState(bool Crouch);
 
-	// OnWalk
-	UFUNCTION(Server, Reliable)
-	void CS_OnIronsights();
-	void CS_OnIronsights_Implementation();
-	UFUNCTION(NetMulticast, Reliable)
-	void MC_OnIronsights();
-	void MC_OnIronsights_Implementation();
+	// On Ironsights
+	UFUNCTION()
+	void OnStartIronsights();
+	UFUNCTION()
+	void OnStopIronsights();
 
-	// OffWalk
+	void SetIronsights(bool Ironsight, bool bToggle);
 	UFUNCTION(Server, Reliable)
-	void CS_OffIronsights();
-	void CS_OffIronsights_Implementation();
-	UFUNCTION(NetMulticast, Reliable)
-	void MC_OffIronsights();
-	void MC_OffIronsights_Implementation();
+	void ServerSetIronsights(bool Ironsight, bool bToggle);
 
-	void UpdateIronsightsState(bool Ironsights);
+
 
 	// OnFire
 	UFUNCTION(Server, Reliable)
 	void CS_OnFire();
 	void CS_OnFire_Implementation();
 	UFUNCTION(NetMulticast, Reliable)
-	void MC_OnFire();
-	void MC_OnFire_Implementation();
+	void MC_OnFire(const FVector& EndLocation);
+	void MC_OnFire_Implementation(const FVector& EndLocation);
+
 
 	// OffFire
 	UFUNCTION(Server, Reliable)
@@ -143,10 +141,13 @@ public:
 	FVector GetCameraForward();
 
 public:
-	const FVector NormalSocketOffset = FVector(0, 40, 70);
+	const FVector NormalSocketOffset = FVector(0, 40, 20);
 
 	bool bSprint = false;
+
+	UPROPERTY(Transient, Replicated)	// Transient 직렬화할 필요없다. 매번 게임 실행시 변하는 값들. 저장에서 제외.
 	bool bIronsights = false;
+
 	bool bCrouch = false;
 	bool bFPP = false;
 
@@ -165,4 +166,7 @@ private:
 	class UCPP_BaseCharacterAnim* AnimInstance = nullptr;
 	class ACPP_BaseGun* Gun = nullptr;
 
+	class ACPP_BasePlayerState* GetBasePlayerState();
+
+	TSubclassOf<ACPP_BaseGun> BaseGunClass;
 };
