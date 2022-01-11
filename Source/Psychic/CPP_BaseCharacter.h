@@ -120,6 +120,8 @@ public:
 
 	void TogglePrespective();
 
+	bool IsRunning();
+
 	bool IsSprint();
 	bool IsIronsights() {return this->bIronsights;}
 	bool IsCrouch() { return this->bCrouch;}
@@ -136,6 +138,8 @@ public:
 	const FVector NormalSocketOffset = FVector(0, 30, 20);
 	const FVector CrouchSocketOffset = FVector(0,30,-40);
 
+
+	UPROPERTY(Transient, Replicated)
 	bool bSprint = false;
 
 	UPROPERTY(Transient, Replicated)	// Transient 직렬화할 필요없다. 매번 게임 실행시 변하는 값들. 저장에서 제외.
@@ -149,6 +153,8 @@ public:
 	FRotator ControlRotation;	// Client에서 입력한 로테이션값
 
 private:
+	bool bWantsToSprint;
+
 	constexpr static float SPRINTSPEED = 450.f;
 	constexpr static float JOGSPEED = 250.f;
 	constexpr static float WALKSPEED = 150.f;

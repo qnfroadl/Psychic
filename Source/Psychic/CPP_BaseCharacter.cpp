@@ -120,18 +120,20 @@ void ACPP_BaseCharacter::Tick(float DeltaTime)
 	if (IsLocallyControlled())
 	{
 		CS_UpdateControlRotation(GetControlRotation());
+
+		if (this->bSprint && false == this->IsRunning())	// 뒤로달리기. 제자리달리기 방지.
+		{
+			SetSprint(false);
+		}
+
+		UpdateCrouchCamera();
 	}
 	else {
 		// GetMesh()->SetWorldRotation(this->ControlRotation);
 		// TPPCamera->SetWorldRotation(this->ControlRotation);
 	}
-	if (false == this->IsSprint())
-	{
-		SetSprint(false);
-	}
-
-
-	UpdateCrouchCamera();
+	
+	
 	
 }
 
@@ -399,9 +401,19 @@ void ACPP_BaseCharacter::TogglePrespective()
 	bUseControllerRotationYaw = true;
 }
 
+bool ACPP_BaseCharacter::IsRunning()
+{
+	if (!GetCharacterMovement())
+	{
+		return false;
+	}
+
+	return this->bSprint && false == GetVelocity().IsZero() && (GetVelocity().GetSafeNormal2D() | GetActorForwardVector()) > -0.1;
+}
+
 bool ACPP_BaseCharacter::IsSprint()
 {
-	return this->bSprint && 0.1f <= GetVelocity().Size();
+	return this->bSprint;
 }
 
 UCameraComponent* ACPP_BaseCharacter::GetCurrentCamera()
@@ -448,4 +460,6 @@ void ACPP_BaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	
 	DOREPLIFETIME(ACPP_BaseCharacter, bIronsights);
 	DOREPLIFETIME(ACPP_BaseCharacter, bCrouch);
+	DOREPLIFETIME(ACPP_BaseCharacter, bSprint);
+
 }
