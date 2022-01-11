@@ -106,7 +106,6 @@ void ACPP_BaseCharacter::BeginPlay()
 	param.Instigator = this;
 	param.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-
 	FTransform transform;
 	Gun = GetWorld()->SpawnActor<ACPP_BaseGun>(BaseGunClass/*ACPP_BaseGun::StaticClass()*/, transform, param);
 	Gun->SetOwningPawn(this);
@@ -126,7 +125,14 @@ void ACPP_BaseCharacter::Tick(float DeltaTime)
 		// GetMesh()->SetWorldRotation(this->ControlRotation);
 		// TPPCamera->SetWorldRotation(this->ControlRotation);
 	}
+	if (false == this->IsSprint())
+	{
+		SetSprint(false);
+	}
 
+
+	UpdateCrouchCamera();
+	
 }
 
 // Called to bind functionality to input
@@ -140,11 +146,11 @@ void ACPP_BaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	PlayerInputComponent->BindAxis(TEXT("LookUp"), this, &ACPP_BaseCharacter::OnLookUp);
 	PlayerInputComponent->BindAxis(TEXT("Turn"), this, &ACPP_BaseCharacter::OnTurn);
 
-	PlayerInputComponent->BindAction(TEXT("Sprint"), IE_Pressed, this, &ACPP_BaseCharacter::CS_OnSprint);
-	PlayerInputComponent->BindAction(TEXT("Sprint"), IE_Released, this, &ACPP_BaseCharacter::CS_OffSprint);
+	PlayerInputComponent->BindAction(TEXT("Sprint"), IE_Pressed, this, &ACPP_BaseCharacter::OnStartSprint);
+	PlayerInputComponent->BindAction(TEXT("Sprint"), IE_Released, this, &ACPP_BaseCharacter::OnStopSprint);
 
-	PlayerInputComponent->BindAction(TEXT("Crouch"), IE_Pressed, this, &ACPP_BaseCharacter::CS_OnCrouch);
-	PlayerInputComponent->BindAction(TEXT("Crouch"), IE_Released, this, &ACPP_BaseCharacter::CS_OffCrouch);
+	PlayerInputComponent->BindAction(TEXT("Crouch"), IE_Pressed, this, &ACPP_BaseCharacter::OnStartCrouchAction);
+	PlayerInputComponent->BindAction(TEXT("Crouch"), IE_Released, this, &ACPP_BaseCharacter::OnStopCrouchAction);
 
 	PlayerInputComponent->BindAction(TEXT("Ironsights"), IE_Pressed, this, &ACPP_BaseCharacter::OnStartIronsights);
 	PlayerInputComponent->BindAction(TEXT("Ironsights"), IE_Released, this, &ACPP_BaseCharacter::OnStopIronsights);
@@ -182,31 +188,51 @@ void ACPP_BaseCharacter::OnTurn(float AxisValue)
 	AddControllerYawInput(AxisValue);
 }
 
-void ACPP_BaseCharacter::CS_OnSprint_Implementation()
-{
-	MC_OnSprint();
-}
-void ACPP_BaseCharacter::MC_OnSprint_Implementation()
-{
-	if(IsCrouch()) { UpdateCrouchState(false);}
-	// if(IsIronsights()){	UpdateIronsightsState(false);}
-	
-	UpdateSprintState(true);
 
+void ACPP_BaseCharacter::OnStartSprint()
+{
+	if (IsCrouch())
+	{
+		SetCrouch(false);
+	}
+	if (IsIronsights())
+	{
+		SetIronsights(false);
+	}
+
+	if (GetBasePlayerState()->bSprintToggle)
+	{
+		SetSprint(!this->bSprint);
+	}
+	else {
+		SetSprint(true);
+	}
+}
+
+void ACPP_BaseCharacter::OnStopSprint()
+{
+	if (false == GetBasePlayerState()->bSprintToggle)
+	{
+		SetSprint(false);
+	}
+}
+
+void ACPP_BaseCharacter::SetSprint(bool _bSprint)
+{
+	this->bSprint = _bSprint;
 	UpdateMoveSpeed();
+
+	if (false == HasAuthority())
+	{
+		ServerSetSprint(this->bSprint);
+	} 
 }
 
-void ACPP_BaseCharacter::CS_OffSprint_Implementation()
+void ACPP_BaseCharacter::ServerSetSprint_Implementation(bool _bSprint)
 {
-	MC_OffSprint();
+	SetSprint(_bSprint);
 }
 
-void ACPP_BaseCharacter::MC_OffSprint_Implementation()
-{
-	UpdateSprintState(false);
-	UpdateMoveSpeed();
-
-}
 
 void ACPP_BaseCharacter::UpdateMoveSpeed()
 {
@@ -225,101 +251,92 @@ void ACPP_BaseCharacter::UpdateMoveSpeed()
 	else {
 		GetCharacterMovement()->MaxWalkSpeed = JOGSPEED;
 	}
-// 
-// 	if (HasAuthority())
-// 	{
-// 		UE_LOG(LogTemp, Warning, TEXT("Listen"));
-// 	}
-// 	else {
-// 		UE_LOG(LogTemp, Warning, TEXT("Client"));
-// 	}
-// 	UE_LOG(LogTemp, Warning, TEXT("%lf"), GetCharacterMovement()->MaxWalkSpeed);
-
+	
 }
 
-void ACPP_BaseCharacter::UpdateSprintState(bool Sprint)
+void ACPP_BaseCharacter::OnStartCrouchAction()
 {
-	this->bSprint = Sprint;
-	if(AnimInstance)
+	if (IsSprint())
 	{
-		AnimInstance->bSprint = this->bSprint;
+		SetSprint(false);
 	}
-}
-
-void ACPP_BaseCharacter::CS_OnCrouch_Implementation()
-{
-	MC_OnCrouch();
-}
-
-void ACPP_BaseCharacter::MC_OnCrouch_Implementation()
-{
-	if(IsSprint()) {UpdateSprintState(false); }
 
 	if (GetBasePlayerState()->bCrouchToggle)
 	{
-		UpdateCrouchState(!this->bCrouch);
+		SetCrouch(!this->bCrouch);
 	}
 	else {
-		UpdateCrouchState(true);
+		SetCrouch(true);
 	}
-
-	UpdateMoveSpeed();
+	
 }
 
-void ACPP_BaseCharacter::CS_OffCrouch_Implementation()
-{
-	MC_OffCrouch();
-}
-
-void ACPP_BaseCharacter::MC_OffCrouch_Implementation()
+void ACPP_BaseCharacter::OnStopCrouchAction()
 {
 	if (false == GetBasePlayerState()->bCrouchToggle)
 	{
-		UpdateCrouchState(false);
+		SetCrouch(false);
 	}
-	UpdateMoveSpeed();
 }
 
-void ACPP_BaseCharacter::UpdateCrouchState(bool Crouch)
+void ACPP_BaseCharacter::SetCrouch(bool _bCrouch)
 {
-	this->bCrouch = Crouch;
-	if(AnimInstance)
+	this->bCrouch = _bCrouch;
+	UpdateMoveSpeed();
+
+	if (false == HasAuthority())
 	{
-		AnimInstance->bCrouch = this->bCrouch;
+		ServerSetCrouch(this->bCrouch);
 	}
+}
+
+void ACPP_BaseCharacter::ServerSetCrouch_Implementation(bool _bCrouch)
+{
+	SetCrouch(_bCrouch);
 }
 
 void ACPP_BaseCharacter::OnStartIronsights()
 {
-	// 조건 체크.
-	SetIronsights(true, GetBasePlayerState()->bSprintToggle);
-
+	if (IsSprint())
+	{
+		SetSprint(false);
+	}
+	
+	if (GetBasePlayerState()->bIronsightsToggle)
+	{
+		SetIronsights(!this->bIronsights);
+	}
+	else {
+		SetIronsights(true);
+	}
+	
 }
 
 void ACPP_BaseCharacter::OnStopIronsights()
 {
-	// 조건 체크.
-	SetIronsights(false, GetBasePlayerState()->bSprintToggle);
+	if (false == GetBasePlayerState()->bIronsightsToggle)
+	{
+		SetIronsights(false);
+	}
 
 }
 
-void ACPP_BaseCharacter::SetIronsights(bool bIronsight, bool bToggle)
+void ACPP_BaseCharacter::SetIronsights(bool _bIronsight)
 {
-	this->bIronsights = bIronsight;
-// 	if (AnimInstance)
-// 	{
-// 		AnimInstance->bIronSight = this->bIronsights;
-// 	}
+
+	this->bIronsights = _bIronsight;
+	UpdateMoveSpeed();
 
 	if (false == HasAuthority())
 	{
-		ServerSetIronsights(bIronsight, bToggle);
+		ServerSetIronsights(this->bIronsights);
 	}
+
 }
 
-void ACPP_BaseCharacter::ServerSetIronsights_Implementation(bool bIronsight, bool bToggle)
+void ACPP_BaseCharacter::ServerSetIronsights_Implementation(bool _bIronsight)
 {
-	SetIronsights(bIronsight, bToggle);
+	SetIronsights(_bIronsight);
 }
 
 
@@ -382,6 +399,11 @@ void ACPP_BaseCharacter::TogglePrespective()
 	bUseControllerRotationYaw = true;
 }
 
+bool ACPP_BaseCharacter::IsSprint()
+{
+	return this->bSprint && 0.1f <= GetVelocity().Size();
+}
+
 UCameraComponent* ACPP_BaseCharacter::GetCurrentCamera()
 {
 	return bFPP? FPPCamera : TPPCamera;
@@ -397,15 +419,24 @@ FVector ACPP_BaseCharacter::GetCameraForward()
 	return GetCurrentCamera()->GetForwardVector();
 }
 
+void ACPP_BaseCharacter::UpdateCrouchCamera()
+{
+	FVector CurrentOffset = this->SpringArm->SocketOffset;
+	FVector TargetOffset = bCrouch ? this->CrouchSocketOffset : this->NormalSocketOffset;
+
+	TargetOffset = UKismetMathLibrary::VInterpTo(CurrentOffset, TargetOffset, GetWorld()->GetDeltaSeconds(), 5.f);
+	SpringArm->SocketOffset = TargetOffset;
+}
+
 ACPP_BasePlayerState* ACPP_BaseCharacter::GetBasePlayerState()
 {
 	// SetPlayerState
 	if (nullptr == PlayerState)
 	{
 		PlayerState = Cast<ACPP_BasePlayerState>(GetPlayerState());
+		
 	}
-	
-	check(PlayerState);
+	// check(nullptr != PlayerState);
 
 	return PlayerState;
 }
@@ -416,4 +447,5 @@ void ACPP_BaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 
 	
 	DOREPLIFETIME(ACPP_BaseCharacter, bIronsights);
+	DOREPLIFETIME(ACPP_BaseCharacter, bCrouch);
 }

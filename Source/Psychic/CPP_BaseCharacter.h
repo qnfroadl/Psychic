@@ -55,42 +55,30 @@ public:
 	void OnTurn(float AxisValue);
 
 	// OnSprint
-	UFUNCTION(Server, Reliable)
-	void CS_OnSprint();
-	void CS_OnSprint_Implementation();
-	UFUNCTION(NetMulticast, Reliable)
-	void MC_OnSprint();
-	void MC_OnSprint_Implementation();
 
-	// OffSprint
-	UFUNCTION(Server, Reliable)
-	void CS_OffSprint();
-	void CS_OffSprint_Implementation();
-	UFUNCTION(NetMulticast, Reliable)
-	void MC_OffSprint();
-	void MC_OffSprint_Implementation();
+	UFUNCTION()
+	void OnStartSprint();
+	UFUNCTION()
+	void OnStopSprint();
 
-	void UpdateSprintState(bool Sprint);
+	void SetSprint(bool _bSprint);
+
+	UFUNCTION(Server, Reliable)
+	void ServerSetSprint(bool _bSprint);
 
 	void UpdateMoveSpeed();
 
-	// OnCrouch
-	UFUNCTION(Server, Reliable)
-	void CS_OnCrouch();
-	void CS_OnCrouch_Implementation();
-	UFUNCTION(NetMulticast, Reliable)
-	void MC_OnCrouch();
-	void MC_OnCrouch_Implementation();
+	// On Crouch
+	UFUNCTION()
+	void OnStartCrouchAction();
+	
+	UFUNCTION()
+	void OnStopCrouchAction();
 
-	// OffCrouch
+	void SetCrouch(bool Crouch);
 	UFUNCTION(Server, Reliable)
-	void CS_OffCrouch();
-	void CS_OffCrouch_Implementation();
-	UFUNCTION(NetMulticast, Reliable)
-	void MC_OffCrouch();
-	void MC_OffCrouch_Implementation();
+	void ServerSetCrouch(bool Crouch);
 
-	void UpdateCrouchState(bool Crouch);
 
 	// On Ironsights
 	UFUNCTION()
@@ -98,9 +86,9 @@ public:
 	UFUNCTION()
 	void OnStopIronsights();
 
-	void SetIronsights(bool Ironsight, bool bToggle);
+	void SetIronsights(bool Ironsight);
 	UFUNCTION(Server, Reliable)
-	void ServerSetIronsights(bool Ironsight, bool bToggle);
+	void ServerSetIronsights(bool Ironsight);
 
 
 
@@ -132,7 +120,7 @@ public:
 
 	void TogglePrespective();
 
-	bool IsSprint() {return this->bSprint;}
+	bool IsSprint();
 	bool IsIronsights() {return this->bIronsights;}
 	bool IsCrouch() { return this->bCrouch;}
 
@@ -140,19 +128,23 @@ public:
 	FVector GetCameraLocation();
 	FVector GetCameraForward();
 
+private:
+	void UpdateCrouchCamera();
+
+
 public:
-	const FVector NormalSocketOffset = FVector(0, 40, 20);
+	const FVector NormalSocketOffset = FVector(0, 30, 20);
+	const FVector CrouchSocketOffset = FVector(0,30,-40);
 
 	bool bSprint = false;
 
 	UPROPERTY(Transient, Replicated)	// Transient 직렬화할 필요없다. 매번 게임 실행시 변하는 값들. 저장에서 제외.
 	bool bIronsights = false;
 
+	UPROPERTY(Replicated)
 	bool bCrouch = false;
-	bool bFPP = false;
 
-	//test.
-	bool bWalk = false;
+	bool bFPP = false;
 
 	FRotator ControlRotation;	// Client에서 입력한 로테이션값
 
@@ -169,4 +161,6 @@ private:
 	class ACPP_BasePlayerState* GetBasePlayerState();
 
 	TSubclassOf<ACPP_BaseGun> BaseGunClass;
+
+	
 };

@@ -16,9 +16,9 @@ class PSYCHIC_API ACPP_BasePlayerState : public APlayerState
 	
 
 public:
-	ACPP_BasePlayerState() = default;
+	ACPP_BasePlayerState();
 
-	bool bSprintToggle = true;
-	bool bCrouchToggle = true;
-	bool bIronsightsToggle = true;
+	bool bSprintToggle;
+	bool bCrouchToggle;
+	bool bIronsightsToggle;
 };
