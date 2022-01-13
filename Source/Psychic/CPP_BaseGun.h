@@ -25,8 +25,10 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+// 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+// 	class UStaticMeshComponent* Gun;					
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class UStaticMeshComponent* Gun;
+	class USkeletalMeshComponent* SK_Gun;
 
 	class UParticleSystem* Explosion;
 // 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

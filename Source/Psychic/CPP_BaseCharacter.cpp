@@ -50,9 +50,10 @@ ACPP_BaseCharacter::ACPP_BaseCharacter()
 
 	FPPCamera->SetupAttachment(GetMesh(), TEXT("head"));
 	FPPCamera->SetRelativeRotation(FRotator(0.f, 90.f, -90.f));
-	FPPCamera->SetRelativeLocation(FVector(-5.f, 30.f, 0.f));
+	FPPCamera->SetRelativeLocation(FVector(-5.f, 30.f, -10.f));
 	FPPCamera->bUsePawnControlRotation = true;	// 안하면 머리 따라서 흔들림.
 
+	
 
 	// Set Gun StaticMesh.
 // 	Gun = CreateDefaultSubobject<UCPP_BaseGun>(TEXT("Gun"));
@@ -107,9 +108,11 @@ void ACPP_BaseCharacter::BeginPlay()
 	param.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 	FTransform transform;
-	Gun = GetWorld()->SpawnActor<ACPP_BaseGun>(BaseGunClass/*ACPP_BaseGun::StaticClass()*/, transform, param);
-	Gun->SetOwningPawn(this);
-	Gun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("GunSocket"));
+	BaseGun = GetWorld()->SpawnActor<ACPP_BaseGun>(BaseGunClass/*ACPP_BaseGun::StaticClass()*/, transform, param);
+	BaseGun->SetOwningPawn(this);
+	BaseGun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("GunSocket"));
+
+	ScopeCamera->AttachToComponent(BaseGun->SK_Gun, FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("ScopeCamera"));
 }
 
 // Called every frame
@@ -202,7 +205,7 @@ void ACPP_BaseCharacter::OnStartSprint()
 		SetIronsights(false);
 	}
 
-	if (GetBasePlayerState()->bSprintToggle)
+	if (GetBasePlayerState() && GetBasePlayerState()->bSprintToggle)
 	{
 		SetSprint(!this->bSprint);
 	}
@@ -213,7 +216,7 @@ void ACPP_BaseCharacter::OnStartSprint()
 
 void ACPP_BaseCharacter::OnStopSprint()
 {
-	if (false == GetBasePlayerState()->bSprintToggle)
+	if (GetBasePlayerState() && false == GetBasePlayerState()->bSprintToggle)
 	{
 		SetSprint(false);
 	}
@@ -263,7 +266,7 @@ void ACPP_BaseCharacter::OnStartCrouchAction()
 		SetSprint(false);
 	}
 
-	if (GetBasePlayerState()->bCrouchToggle)
+	if (GetBasePlayerState() && GetBasePlayerState()->bCrouchToggle)
 	{
 		SetCrouch(!this->bCrouch);
 	}
@@ -275,7 +278,7 @@ void ACPP_BaseCharacter::OnStartCrouchAction()
 
 void ACPP_BaseCharacter::OnStopCrouchAction()
 {
-	if (false == GetBasePlayerState()->bCrouchToggle)
+	if (GetBasePlayerState() && false == GetBasePlayerState()->bCrouchToggle)
 	{
 		SetCrouch(false);
 	}
@@ -304,7 +307,7 @@ void ACPP_BaseCharacter::OnStartIronsights()
 		SetSprint(false);
 	}
 	
-	if (GetBasePlayerState()->bIronsightsToggle)
+	if (GetBasePlayerState() && GetBasePlayerState()->bIronsightsToggle)
 	{
 		SetIronsights(!this->bIronsights);
 	}
@@ -316,7 +319,7 @@ void ACPP_BaseCharacter::OnStartIronsights()
 
 void ACPP_BaseCharacter::OnStopIronsights()
 {
-	if (false == GetBasePlayerState()->bIronsightsToggle)
+	if (GetBasePlayerState() && false == GetBasePlayerState()->bIronsightsToggle)
 	{
 		SetIronsights(false);
 	}
@@ -328,6 +331,19 @@ void ACPP_BaseCharacter::SetIronsights(bool _bIronsight)
 
 	this->bIronsights = _bIronsight;
 	UpdateMoveSpeed();
+
+	if (this->bIronsights)
+	{
+		TPPCamera->SetActive(false);
+		FPPCamera->SetActive(false);
+		ScopeCamera->SetActive(true);
+	}
+	else {
+		
+		ScopeCamera->SetActive(false);
+		TPPCamera->SetActive(!bFPP);
+		FPPCamera->SetActive(bFPP);
+	}
 
 	if (false == HasAuthority())
 	{
@@ -368,7 +384,7 @@ void ACPP_BaseCharacter::MC_OnFire_Implementation(const FVector& EndLocation)
 {
 	UE_LOG(LogTemp, Warning, TEXT(__FUNCTION__));
 
-	Gun->OnFire(EndLocation, 1000);
+	BaseGun->OnFire(EndLocation, 1000);
 }
 
 void ACPP_BaseCharacter::CS_OffFire_Implementation()
@@ -395,10 +411,12 @@ void ACPP_BaseCharacter::TogglePrespective()
 {
 	bFPP = !bFPP;
 
-	TPPCamera->SetActive(!bFPP);
-	FPPCamera->SetActive(bFPP);
-
-	bUseControllerRotationYaw = true;
+	if (false == bIronsights)
+	{
+		TPPCamera->SetActive(!bFPP);
+		FPPCamera->SetActive(bFPP);
+	}
+	
 }
 
 bool ACPP_BaseCharacter::IsRunning()
@@ -418,7 +436,12 @@ bool ACPP_BaseCharacter::IsSprint()
 
 UCameraComponent* ACPP_BaseCharacter::GetCurrentCamera()
 {
-	return bFPP? FPPCamera : TPPCamera;
+	if (bIronsights)
+	{
+		return ScopeCamera;
+	}
+
+	return bFPP ? FPPCamera : TPPCamera;
 }
 
 FVector ACPP_BaseCharacter::GetCameraLocation()

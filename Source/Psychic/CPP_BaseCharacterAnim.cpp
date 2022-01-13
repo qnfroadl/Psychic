@@ -28,7 +28,13 @@ void UCPP_BaseCharacterAnim::NativeUpdateAnimation(float DeltaSeconds)
 		FVector Vel = BaseCharacter->GetVelocity();
 		this->Speed = Vel.Size();
 		this->Direction = CalculateDirection(Vel, BaseCharacter->GetActorRotation());
+
 		this->AimPitch = FMath::ClampAngle(BaseCharacter->ControlRotation.Pitch, -90, 90);
+		
+		BaseCharacter->GetActorRotation();
+		
+
+
 		this->bIronSight = BaseCharacter->bIronsights;
 		this->bCrouch = BaseCharacter->bCrouch;
 		this->bSprint = BaseCharacter->bSprint;

@@ -24,7 +24,7 @@ void ACPP_GamePlayHUD::DrawCrosshair()
 	if (PC)
 	{
 		ACPP_BaseCharacter* BaseCharacter = Cast<ACPP_BaseCharacter>(PC->GetPawn());
-		if (BaseCharacter && false == BaseCharacter->IsSprint() && false == BaseCharacter->IsIronsights())
+		if (BaseCharacter && false == BaseCharacter->IsSprint()/* && false == BaseCharacter->IsIronsights()*/)
 		{
 			FVector2D center(Canvas->ClipX * 0.5f, Canvas->ClipY * 0.5f);
 

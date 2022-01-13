@@ -135,8 +135,8 @@ private:
 
 
 public:
-	const FVector NormalSocketOffset = FVector(0, 30, 20);
-	const FVector CrouchSocketOffset = FVector(0,30,-40);
+	const FVector NormalSocketOffset = FVector(0, 30, 50);
+	const FVector CrouchSocketOffset = FVector(0,30,-20);
 
 
 	UPROPERTY(Transient, Replicated)
@@ -155,14 +155,14 @@ public:
 private:
 	bool bWantsToSprint;
 
-	constexpr static float SPRINTSPEED = 450.f;
-	constexpr static float JOGSPEED = 250.f;
-	constexpr static float WALKSPEED = 150.f;
-	constexpr static float CROUCHSPEED = 100.f;
+	constexpr static float SPRINTSPEED = 400.f;
+	constexpr static float JOGSPEED = 200.f;
+	constexpr static float WALKSPEED = 130.f;
+	constexpr static float CROUCHSPEED = 80.f;
 
 	class ACPP_BasePlayerState* PlayerState = nullptr;
 	class UCPP_BaseCharacterAnim* AnimInstance = nullptr;
-	class ACPP_BaseGun* Gun = nullptr;
+	class ACPP_BaseGun* BaseGun = nullptr;
 
 	class ACPP_BasePlayerState* GetBasePlayerState();
 
