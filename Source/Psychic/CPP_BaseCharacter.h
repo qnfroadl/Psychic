@@ -135,8 +135,8 @@ private:
 
 
 public:
-	const FVector NormalSocketOffset = FVector(0, 30, 50);
-	const FVector CrouchSocketOffset = FVector(0,30,-20);
+	const FVector NormalSocketOffset = FVector(0, 30, 20);
+	const FVector CrouchSocketOffset = FVector(0,30,-40);
 
 
 	UPROPERTY(Transient, Replicated)
