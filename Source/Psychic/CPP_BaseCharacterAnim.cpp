@@ -31,15 +31,9 @@ void UCPP_BaseCharacterAnim::NativeUpdateAnimation(float DeltaSeconds)
 
 		this->AimPitch = FMath::ClampAngle(BaseCharacter->ControlRotation.Pitch, -90, 90);
 		
-		BaseCharacter->GetActorRotation();
-		
-
-
 		this->bIronSight = BaseCharacter->bIronsights;
 		this->bCrouch = BaseCharacter->bCrouch;
 		this->bSprint = BaseCharacter->bSprint;
 
-		// UE_LOG(LogTemp, Warning, TEXT("pitch: %lf"), AimPitch);
-		// UE_LOG(LogTemp, Warning, TEXT("%lf"), this->Speed);
 	}
 }
