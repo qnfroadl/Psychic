@@ -48,10 +48,16 @@ void APsychicGameModeBase::PostLogin(APlayerController* NewPlayer)
 	FTransform transform;
 	auto SpawnGun = GetWorld()->SpawnActor<ACPP_BaseGun>(BaseGunClass/*ACPP_BaseGun::StaticClass()*/, transform, param);
 	
+	// Init gun.
+	SpawnGun->SetRPM(600);
 	ACPP_BaseCharacter* Player = Cast< ACPP_BaseCharacter>(NewPlayer->GetCharacter());
 	if (Player)
 	{
+		UE_LOG(LogTemp, Log, TEXT("Player SpawnGun"));
 		Player->SetGun(SpawnGun);
+	}
+	else {
+		UE_LOG(LogTemp, Log, TEXT("Player is nullptr"));
 	}
 
 }

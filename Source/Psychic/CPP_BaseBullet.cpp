@@ -10,7 +10,7 @@
 
 // Sets default values
 ACPP_BaseBullet::ACPP_BaseBullet()
-	:ProjectileSpeed(1000.f), bExploded(false)
+	:ProjectileSpeed(3000.f), bExploded(false)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;

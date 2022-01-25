@@ -349,33 +349,37 @@ void ACPP_BaseCharacter::OnStartFire()
 		SetSprint(false);
 	}
 
-	const FVector Start = this->GetCameraLocation();
-	const FVector End = Start + (this->GetCameraForward() * 100000.f);
-	FVector AimEndLocation = End;
-
-	FHitResult HitResult;
-	GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility);
-	if (HitResult.bBlockingHit)
-	{
-		AimEndLocation = HitResult.ImpactPoint;
-	}
-
-
+// 	const FVector Start = this->GetCameraLocation();
+// 	const FVector End = Start + (this->GetCameraForward() * 100000.f);
+// 	FVector AimEndLocation = End;
+// 
+// 	FHitResult HitResult;
+// 	GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility);
+// 	if (HitResult.bBlockingHit)
+// 	{
+// 		AimEndLocation = HitResult.ImpactPoint;
+// 	}
 
 	//test 
 	if (BaseGun)
 	{
-		BaseGun->StartFire(AimEndLocation, 1000);
+		BaseGun->StartFire();
 	}
 	else {
-		UE_LOG(LogTemp, Log, TEXT("BaseGun is nullptr"));
+		UE_LOG(LogTemp, Log, TEXT(__FUNCTION__ " - BaseGun is nullptr"));
 	}
 	
 }
 
 void ACPP_BaseCharacter::OnStopFire()
 {
-	
+	if (BaseGun)
+	{
+		BaseGun->StopFire();
+	}
+	else {
+		UE_LOG(LogTemp, Log, TEXT(__FUNCTION__ " - BaseGun is nullptr"));
+	}
 }
 
 
@@ -462,8 +466,7 @@ void ACPP_BaseCharacter::SetGun(ACPP_BaseGun* Gun)
 		else {
 			BaseGun = Gun;
 			OnRep_SetGun();
-		}
-		
+		}	
 	}
 }
 
@@ -474,6 +477,8 @@ void ACPP_BaseCharacter::ServerSetGun_Implementation(ACPP_BaseGun* Gun)
 
 void ACPP_BaseCharacter::OnRep_SetGun()
 {
+	UE_LOG(LogTemp, Log, TEXT(__FUNCTION__));
+
 	BaseGun->SetOwner(this);
 	BaseGun->SetOwningPawn(this);
 	BaseGun->SetInstigator(this);

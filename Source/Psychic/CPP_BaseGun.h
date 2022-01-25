@@ -42,10 +42,10 @@ public:
 // 	class USceneComponent* Muzzle;
 
 	/** Muzzle에서 EndLocation 까지 발사.*/
-	void StartFire(const FVector& EndLocation, float Distance = 100000.f);
+	void StartFire();
 
 	UFUNCTION(Server, Reliable)
-	void ServerStartFire(const FVector& EndLocation, float Distance);
+	void ServerStartFire();
 
 	void StopFire();
 
@@ -55,6 +55,11 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerFireProjectile(FVector StartLocation, FVector_NetQuantizeNormal Direction);
 
+	UFUNCTION()
+	void OnFire();
+	UFUNCTION()
+	void OnReFire();
+
 	void OnFireEffect();
 	
 	void SetOwningPawn(APawn* NewOwner);
@@ -63,7 +68,13 @@ public:
 	void OnRep_BurstCounter();
 
 // 	bool OnReload();
+	UFUNCTION()
+	void SetRPM(uint32 _RPM);
 
+	virtual FVector GetAdjustedAim() const;
+
+
+public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	int CurrentAmmo;
 
@@ -84,8 +95,14 @@ public:
 	EGunState CurrentState;
 
 	UPROPERTY(ReplicatedUsing = OnRep_BurstCounter)
-	uint32 BursterCounter;
+	uint32 BurstCounter;
 	
-	float RPM;
+	FTimerHandle OnFireHandle;
 
+
+private:
+	uint32 RPM;
+	float BetweenFireTime;
+	float LastFireTime;
+	float TimerInterval;
 };
