@@ -20,4 +20,10 @@ public:
 	void BeginPlay() override;
 
 	class ACPP_TitleHUD* TitleHUD;
+
+	void OnStartServer();
+
+	void OnConnectServer(const FString& IPText);
+
+	void OnSetName(const FString& IPText);
 };

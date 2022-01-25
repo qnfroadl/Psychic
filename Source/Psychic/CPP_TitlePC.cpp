@@ -8,7 +8,7 @@
 ACPP_TitlePC::ACPP_TitlePC()
 :APlayerController(), TitleHUD(nullptr)
 {
-	
+	// ConstructorHelpers::FClassFinder<ACPP_TitleHUD>
 }
 
 void ACPP_TitlePC::BeginPlay()
@@ -17,7 +17,22 @@ void ACPP_TitlePC::BeginPlay()
 	
 	TitleHUD = GetHUD<ACPP_TitleHUD>();
 
+	SetShowMouseCursor(true);
 	SetInputMode(FInputModeUIOnly());
-
 	
+}
+
+void ACPP_TitlePC::OnStartServer()
+{
+	
+}
+
+void ACPP_TitlePC::OnConnectServer(const FString& IPText)
+{
+	
+}
+
+void ACPP_TitlePC::OnSetName(const FString& IPText)
+{
+
 }

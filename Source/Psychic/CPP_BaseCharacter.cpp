@@ -82,12 +82,7 @@ ACPP_BaseCharacter::ACPP_BaseCharacter()
 
 
 
-	// testing...
-	ConstructorHelpers::FClassFinder<ACPP_BaseGun>BP_BASEGUN(TEXT("Blueprint'/Game/Blueprints/BP_BaseGun.BP_BaseGun_C'"));
-	if (BP_BASEGUN.Succeeded())
-	{
-		BaseGunClass = BP_BASEGUN.Class;
-	}
+	
 }
 
 // Called when the game starts or when spawned
@@ -100,19 +95,6 @@ void ACPP_BaseCharacter::BeginPlay()
 	{
 		AnimInstance = Cast<UCPP_BaseCharacterAnim>(mesh->GetAnimInstance());
 	}
-
-	// Create Default Weapon(Gun) testing...
-	FActorSpawnParameters param;
-	param.Owner = this;
-	param.Instigator = this;
-	param.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-	FTransform transform;
-	BaseGun = GetWorld()->SpawnActor<ACPP_BaseGun>(BaseGunClass/*ACPP_BaseGun::StaticClass()*/, transform, param);
-	BaseGun->SetOwningPawn(this);
-	BaseGun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("GunSocket"));
-
-	ScopeCamera->AttachToComponent(BaseGun->SK_Gun, FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("ScopeCamera"));
 }
 
 // Called every frame
@@ -160,11 +142,12 @@ void ACPP_BaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	PlayerInputComponent->BindAction(TEXT("Ironsights"), IE_Pressed, this, &ACPP_BaseCharacter::OnStartIronsights);
 	PlayerInputComponent->BindAction(TEXT("Ironsights"), IE_Released, this, &ACPP_BaseCharacter::OnStopIronsights);
 	
-	PlayerInputComponent->BindAction(TEXT("Fire"), IE_Pressed, this, &ACPP_BaseCharacter::CS_OnFire);
-	PlayerInputComponent->BindAction(TEXT("Fire"), IE_Released, this, &ACPP_BaseCharacter::CS_OffFire);
+	PlayerInputComponent->BindAction(TEXT("Fire"), IE_Pressed, this, &ACPP_BaseCharacter::OnStartFire);
+	PlayerInputComponent->BindAction(TEXT("Fire"), IE_Released, this, &ACPP_BaseCharacter::OnStopFire);
 
 	PlayerInputComponent->BindAction(TEXT("Prespective"), IE_Pressed, this, &ACPP_BaseCharacter::TogglePrespective);
 	
+	PlayerInputComponent->BindAction(TEXT("Reload"), IE_Pressed, this, &ACPP_BaseCharacter::OnReload);
 }
 
 void ACPP_BaseCharacter::OnMoveForward(float AxisValue)
@@ -358,12 +341,12 @@ void ACPP_BaseCharacter::ServerSetIronsights_Implementation(bool _bIronsight)
 }
 
 
-void ACPP_BaseCharacter::CS_OnFire_Implementation()
+void ACPP_BaseCharacter::OnStartFire()
 {
 	// 뛰는중에는 발사 금지.
 	if (IsSprint())
 	{
-		return;
+		SetSprint(false);
 	}
 
 	const FVector Start = this->GetCameraLocation();
@@ -377,24 +360,38 @@ void ACPP_BaseCharacter::CS_OnFire_Implementation()
 		AimEndLocation = HitResult.ImpactPoint;
 	}
 
-	MC_OnFire(AimEndLocation);
+
+
+	//test 
+	if (BaseGun)
+	{
+		BaseGun->StartFire(AimEndLocation, 1000);
+	}
+	else {
+		UE_LOG(LogTemp, Log, TEXT("BaseGun is nullptr"));
+	}
+	
 }
 
-void ACPP_BaseCharacter::MC_OnFire_Implementation(const FVector& EndLocation)
+void ACPP_BaseCharacter::OnStopFire()
 {
-	UE_LOG(LogTemp, Warning, TEXT(__FUNCTION__));
-
-	BaseGun->OnFire(EndLocation, 1000);
+	
 }
 
-void ACPP_BaseCharacter::CS_OffFire_Implementation()
+
+void ACPP_BaseCharacter::OnReload()
 {
-	MC_OffFire();
+
+	if (false == HasAuthority())
+	{
+		ServerReload();
+	}
+
 }
 
-void ACPP_BaseCharacter::MC_OffFire_Implementation()
+void ACPP_BaseCharacter::ServerReload_Implementation()
 {
-	// Gun->OffFire();
+	OnReload();
 }
 
 void ACPP_BaseCharacter::CS_UpdateControlRotation_Implementation(const FRotator& rotation)
@@ -454,6 +451,37 @@ FVector ACPP_BaseCharacter::GetCameraForward()
 	return GetCurrentCamera()->GetForwardVector();
 }
 
+void ACPP_BaseCharacter::SetGun(ACPP_BaseGun* Gun)
+{
+	if (Gun != BaseGun)
+	{
+		if (false == HasAuthority())
+		{
+			ServerSetGun(Gun);
+		}
+		else {
+			BaseGun = Gun;
+			OnRep_SetGun();
+		}
+		
+	}
+}
+
+void ACPP_BaseCharacter::ServerSetGun_Implementation(ACPP_BaseGun* Gun)
+{
+	SetGun(Gun);
+}
+
+void ACPP_BaseCharacter::OnRep_SetGun()
+{
+	BaseGun->SetOwner(this);
+	BaseGun->SetOwningPawn(this);
+	BaseGun->SetInstigator(this);
+	BaseGun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("GunSocket"));
+
+	ScopeCamera->AttachToComponent(BaseGun->SK_Gun, FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("ScopeCamera"));
+}
+
 void ACPP_BaseCharacter::UpdateCrouchCamera()
 {
 	FVector CurrentOffset = this->SpringArm->SocketOffset;
@@ -469,7 +497,6 @@ ACPP_BasePlayerState* ACPP_BaseCharacter::GetBasePlayerState()
 	if (nullptr == PlayerState)
 	{
 		PlayerState = Cast<ACPP_BasePlayerState>(GetPlayerState());
-		
 	}
 	// check(nullptr != PlayerState);
 
@@ -480,9 +507,9 @@ void ACPP_BaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	
 	DOREPLIFETIME(ACPP_BaseCharacter, bIronsights);
 	DOREPLIFETIME(ACPP_BaseCharacter, bCrouch);
 	DOREPLIFETIME(ACPP_BaseCharacter, bSprint);
+	DOREPLIFETIME(ACPP_BaseCharacter, BaseGun);
 
 }

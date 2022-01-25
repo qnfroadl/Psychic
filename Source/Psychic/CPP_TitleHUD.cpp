@@ -6,9 +6,9 @@
 #include "CPP_TitleWidget.h"
 
 ACPP_TitleHUD::ACPP_TitleHUD()
-{
+{	
 	ConstructorHelpers::FClassFinder<UCPP_TitleWidget> WidgetClass (TEXT("WidgetBlueprint'/Game/Blueprints/1_Title/BP_TitleWidget.BP_TitleWidget_C'"));
-	if (WidgetClass.Succeeded())
+	if (WidgetClass.Succeeded())										  
 	{
 		TitleWidgetClass = WidgetClass.Class;
 	}
@@ -16,9 +16,9 @@ ACPP_TitleHUD::ACPP_TitleHUD()
 
 void ACPP_TitleHUD::BeginPlay()
 {
-	if (TitleWidgetClass->GetClass())
+	if (nullptr != TitleWidgetClass)
 	{
-		auto widget = CreateWidget(GetWorld(), TitleWidgetClass->GetClass(), FName(TEXT("TitleWidget")));
+		auto widget = CreateWidget(GetWorld(), TitleWidgetClass, FName(TEXT("TitleWidget")));
 		TitleWidget = Cast<UCPP_TitleWidget>(widget);
 		if (TitleWidget)
 		{

@@ -17,4 +17,8 @@ class PSYCHIC_API APsychicGameModeBase : public AGameModeBase
 public:
 	APsychicGameModeBase();
 
+
+	void PostLogin(APlayerController* NewPlayer) override;
+
+	TSubclassOf<class ACPP_BaseGun> BaseGunClass;
 };

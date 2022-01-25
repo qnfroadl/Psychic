@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "CPP_BaseCharacter.generated.h"
 
+class ACPP_BaseGun;
+
 UCLASS()
 class PSYCHIC_API ACPP_BaseCharacter : public ACharacter
 {
@@ -79,7 +81,6 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerSetCrouch(bool Crouch);
 
-
 	// On Ironsights
 	UFUNCTION()
 	void OnStartIronsights();
@@ -90,24 +91,14 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerSetIronsights(bool Ironsight);
 
-
-
 	// OnFire
-	UFUNCTION(Server, Reliable)
-	void CS_OnFire();
-	void CS_OnFire_Implementation();
-	UFUNCTION(NetMulticast, Reliable)
-	void MC_OnFire(const FVector& EndLocation);
-	void MC_OnFire_Implementation(const FVector& EndLocation);
+	void OnStartFire();
+	void OnStopFire();
 
-
-	// OffFire
+	UFUNCTION()
+	void OnReload();
 	UFUNCTION(Server, Reliable)
-	void CS_OffFire();
-	void CS_OffFire_Implementation();
-	UFUNCTION(NetMulticast, Reliable)
-	void MC_OffFire();
-	void MC_OffFire_Implementation();
+	void ServerReload();
 
 
 	UFUNCTION(Server, Reliable)
@@ -130,6 +121,13 @@ public:
 	FVector GetCameraLocation();
 	FVector GetCameraForward();
 
+	void SetGun(ACPP_BaseGun* Gun);
+	UFUNCTION(Server, Reliable)
+	void ServerSetGun(ACPP_BaseGun* Gun);
+
+	UFUNCTION()
+	void OnRep_SetGun();
+	
 private:
 	void UpdateCrouchCamera();
 
@@ -139,16 +137,19 @@ public:
 	const FVector CrouchSocketOffset = FVector(0,30,-40);
 
 
-	UPROPERTY(Transient, Replicated)
+	UPROPERTY(Replicated)
 	bool bSprint = false;
 
-	UPROPERTY(Transient, Replicated)	// Transient 직렬화할 필요없다. 매번 게임 실행시 변하는 값들. 저장에서 제외.
+	UPROPERTY(Replicated)	// Transient 직렬화할 필요없다. 매번 게임 실행시 변하는 값들. 저장에서 제외.
 	bool bIronsights = false;
 
 	UPROPERTY(Replicated)
 	bool bCrouch = false;
 
 	bool bFPP = false;
+
+	UPROPERTY(ReplicatedUsing=OnRep_SetGun)
+	ACPP_BaseGun* BaseGun = nullptr;
 
 	FRotator ControlRotation;	// Client에서 입력한 로테이션값
 
@@ -162,7 +163,8 @@ private:
 
 	class ACPP_BasePlayerState* PlayerState = nullptr;
 	class UCPP_BaseCharacterAnim* AnimInstance = nullptr;
-	class ACPP_BaseGun* BaseGun = nullptr;
+
+	
 
 	class ACPP_BasePlayerState* GetBasePlayerState();
 

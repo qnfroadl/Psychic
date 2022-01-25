@@ -6,7 +6,14 @@
 #include "GameFramework/Actor.h"
 #include "CPP_BaseGun.generated.h"
 
-class ACPP_BaseCharacter;
+
+UENUM(BlueprintType)
+enum class EGunState : uint8 
+{
+	Idle UMETA(DisplayName="Idle"),
+	Reload UMETA(DisplayName = "Reload"),
+	Fireing UMETA(DisplayName = "Fireing"),
+};
 
 UCLASS()
 class PSYCHIC_API ACPP_BaseGun : public AActor
@@ -35,14 +42,25 @@ public:
 // 	class USceneComponent* Muzzle;
 
 	/** Muzzle에서 EndLocation 까지 발사.*/
- 	void OnFire(const FVector& EndLocation, float Distance = 100000.f);
+	void StartFire(const FVector& EndLocation, float Distance = 100000.f);
 
 	UFUNCTION(Server, Reliable)
-	void CS_FireProjectile(FVector StartLocation, FVector_NetQuantizeNormal Direction);
+	void ServerStartFire(const FVector& EndLocation, float Distance);
+
+	void StopFire();
+
+	UFUNCTION(Server, Reliable)
+	void ServerStopFire();
+
+	UFUNCTION(Server, Reliable)
+	void ServerFireProjectile(FVector StartLocation, FVector_NetQuantizeNormal Direction);
 
 	void OnFireEffect();
+	
+	void SetOwningPawn(APawn* NewOwner);
 
-	void SetOwningPawn(ACPP_BaseCharacter* NewOwner);
+	UFUNCTION()
+	void OnRep_BurstCounter();
 
 // 	bool OnReload();
 
@@ -61,5 +79,13 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	FName ScopeCameraSocketName;
 
-	ACPP_BaseCharacter* BaseCharacter;
+	APawn* CurrentPawn;
+
+	EGunState CurrentState;
+
+	UPROPERTY(ReplicatedUsing = OnRep_BurstCounter)
+	uint32 BursterCounter;
+	
+	float RPM;
+
 };

@@ -17,5 +17,7 @@ class PSYCHIC_API ACPP_BasePlayerController : public APlayerController
 public:
 	ACPP_BasePlayerController();
 
+	void BeginPlay() override;
+
 
 };

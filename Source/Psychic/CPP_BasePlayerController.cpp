@@ -9,4 +9,14 @@ ACPP_BasePlayerController::ACPP_BasePlayerController()
 {
 	PlayerCameraManagerClass = ACPP_BaseCameraManager::StaticClass();
 	
+
+}
+
+void ACPP_BasePlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+
+	SetShowMouseCursor(false);
+	SetInputMode(FInputModeGameOnly());
+
 }

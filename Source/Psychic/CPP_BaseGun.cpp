@@ -15,10 +15,13 @@
 #include "CPP_BaseBullet.h"
 
 #include <DrawDebugHelpers.h>
+#include <Net/UnrealNetwork.h>
 
 // Sets default values
 ACPP_BaseGun::ACPP_BaseGun()
-:SK_Gun(nullptr), CurrentAmmo(0), RemainingAmmo(0), MaxMagazine(0), MuzzleSocketName(TEXT("Muzzle")), ScopeCameraSocketName(TEXT("ScopeCamera"))
+:SK_Gun(nullptr), CurrentAmmo(0), RemainingAmmo(0), MaxMagazine(0), MuzzleSocketName(TEXT("Muzzle")), 
+ScopeCameraSocketName(TEXT("ScopeCamera")), CurrentPawn(nullptr), CurrentState(EGunState::Idle), BursterCounter(0),
+RPM(600)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -33,17 +36,15 @@ ACPP_BaseGun::ACPP_BaseGun()
 // 
 // 	// Set CollisionPreset.
 // 	this->Gun->SetCollisionProfileName(TEXT("CharacterMesh"));
-
+	bReplicates = true;
 
 	this->SK_Gun = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SK_Gun"));
-	ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_BASEGUN(TEXT("SkeletalMesh'/Game/FPS_Weapon_Bundle/Weapons/Meshes/KA74U/SK_KA74U_X.SK_KA74U_X'"));
+	ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_BASEGUN(TEXT("SkeletalMesh'/Game/FPS_Weapon_Bundle/Weapons/Meshes/Ka47/SK_KA47_X.SK_KA47_X'"));
 	if (SK_BASEGUN.Succeeded())
 	{
 		this->SK_Gun->SetSkeletalMesh(SK_BASEGUN.Object);
 	}
 	this->SK_Gun->SetCollisionProfileName(TEXT("CharacterMesh"));
-
-
 
 	ConstructorHelpers::FObjectFinder<UParticleSystem> PS_EXPLOSION(TEXT("ParticleSystem'/Game/StarterContent/Particles/P_Explosion.P_Explosion'"));
 	if (PS_EXPLOSION.Succeeded())
@@ -57,6 +58,17 @@ ACPP_BaseGun::ACPP_BaseGun()
 void ACPP_BaseGun::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (HasAuthority())
+	{
+		UE_LOG(LogTemp, Log, TEXT("Gun has authority"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("Gun has not authority"));
+
+	}
+
 }
 
 // Called every frame
@@ -65,21 +77,49 @@ void ACPP_BaseGun::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-void ACPP_BaseGun::OnFire(const FVector& EndLocation, float Distance)
+void ACPP_BaseGun::StartFire(const FVector& EndLocation, float Distance)
 {
-	OnFireEffect();
-	
-	FVector MuzzleLocation = this->SK_Gun->GetSocketLocation(MuzzleSocketName);
-	FVector  Direction;// = this->Gun->GetSocketTransform(MuzzleSocketName).Rotator().Vector();
-	FVector AimEndLocation = EndLocation;
 
-	Direction = UKismetMathLibrary::FindLookAtRotation(MuzzleLocation, AimEndLocation).Vector();
+	if (false == HasAuthority())
+	{
+		ServerStartFire(EndLocation, Distance);
+	}
+	else
+	{
+		// Start Timer. auto Rifle
 
-	CS_FireProjectile(MuzzleLocation, Direction);
+
+
+		FVector MuzzleLocation = this->SK_Gun->GetSocketLocation(MuzzleSocketName);
+		FVector  Direction;// = this->Gun->GetSocketTransform(MuzzleSocketName).Rotator().Vector();
+		FVector AimEndLocation = EndLocation;
+
+		Direction = UKismetMathLibrary::FindLookAtRotation(MuzzleLocation, AimEndLocation).Vector();
+
+		ServerFireProjectile(MuzzleLocation, Direction);
+
+		BursterCounter++;
+		OnRep_BurstCounter();	// for server
+	}
 
 }
 
-void ACPP_BaseGun::CS_FireProjectile_Implementation(FVector StartLocation, FVector_NetQuantizeNormal Direction)
+void ACPP_BaseGun::ServerStartFire_Implementation(const FVector& EndLocation, float Distance)
+{
+	StartFire(EndLocation, Distance);
+}
+
+void ACPP_BaseGun::StopFire()
+{
+	ServerStopFire();
+}
+
+void ACPP_BaseGun::ServerStopFire_Implementation()
+{
+	BursterCounter = 0;
+}
+
+void ACPP_BaseGun::ServerFireProjectile_Implementation(FVector StartLocation, FVector_NetQuantizeNormal Direction)
 {
 	FTransform SpawnTM(Direction.Rotation(), StartLocation, FVector(5,5,5));
 
@@ -98,20 +138,45 @@ void ACPP_BaseGun::CS_FireProjectile_Implementation(FVector StartLocation, FVect
 
 void ACPP_BaseGun::OnFireEffect()
 {
-	//FTransform MuzzleTransform = this->Gun->GetSocketTransform(MuzzleSocketName);
-	FVector MuzzleLocation = this->SK_Gun->GetSocketLocation(MuzzleSocketName);
+	UE_LOG(LogTemp, Log, TEXT(__FUNCTION__));
 
-	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), Explosion, FTransform(FRotator(), MuzzleLocation, FVector(0.1f)), true);
+	//FTransform MuzzleTransform = this->Gun->GetSocketTransform(MuzzleSocketName);
+	//FVector MuzzleLocation = this->SK_Gun->GetSocketLocation(MuzzleSocketName);
+
+	// UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), Explosion, FTransform(FRotator(), MuzzleLocation, FVector(0.1f)), true);
+	UGameplayStatics::SpawnEmitterAttached(Explosion, this->SK_Gun, MuzzleSocketName);
 }
 
-void ACPP_BaseGun::SetOwningPawn(ACPP_BaseCharacter* NewOwner)
+void ACPP_BaseGun::SetOwningPawn(APawn* NewOwner)
 {
-	if (this->BaseCharacter != NewOwner)
+	if (this->CurrentPawn != NewOwner)
 	{
 		SetInstigator(NewOwner);
-		BaseCharacter = NewOwner;
+		CurrentPawn = NewOwner;
 		
 		SetOwner(NewOwner);
 	}
 }
 
+void ACPP_BaseGun::OnRep_BurstCounter()
+{
+	if (0 < BursterCounter)
+	{
+			// 애니메이션, 소리, 이펙트, 카메라 흔들림?
+			OnFireEffect();
+			// PlaySount
+			// PlayAnimation
+	}
+	else {
+		// stop.
+	}
+}
+
+
+void ACPP_BaseGun::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ACPP_BaseGun, BursterCounter);
+
+}

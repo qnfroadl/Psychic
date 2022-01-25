@@ -25,8 +25,23 @@ public:
 	class UButton* Exit;
 
 	UPROPERTY(meta = (BindWidget))
-	class UEditableText
+	class UEditableText* IPtext;
+
+	UPROPERTY(meta = (BindWidget))
+	class UEditableText* NameText;
+
 protected:
 	void NativeConstruct() override;
 
+public:
+	UFUNCTION()
+	void OnExitCliced();
+
+	UFUNCTION()
+	void OnServerClicked();
+
+	UFUNCTION()
+	void OnJoinClicked();
+
+	
 };
