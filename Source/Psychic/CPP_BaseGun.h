@@ -61,7 +61,8 @@ public:
 	void OnReFire();
 
 	void OnFireEffect();
-	
+	void OnRecoil();
+
 	void SetOwningPawn(APawn* NewOwner);
 
 	UFUNCTION()

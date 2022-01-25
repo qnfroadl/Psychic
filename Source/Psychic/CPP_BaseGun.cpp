@@ -190,6 +190,20 @@ void ACPP_BaseGun::OnFireEffect()
 	// UGameplayStatics::SpawnEmitterAttached(Explosion, this->SK_Gun, MuzzleSocketName);
 }
 
+void ACPP_BaseGun::OnRecoil()
+{
+	AController* Controller = GetInstigatorController();
+	
+	if (Controller && Controller->IsLocalPlayerController())
+	{
+		APawn* pawn = GetInstigator();
+		
+		// 고정 테스트.
+		pawn->AddControllerYawInput(FMath::RandRange(-0.2f, 0.2f));
+		pawn->AddControllerPitchInput(FMath::RandRange(-0.7f, -0.2f));
+	}
+}
+
 void ACPP_BaseGun::SetOwningPawn(APawn* NewOwner)
 {
 	if (this->CurrentPawn != NewOwner)
@@ -209,6 +223,8 @@ void ACPP_BaseGun::OnRep_BurstCounter()
 			OnFireEffect();
 			// PlaySound
 			// PlayAnimation
+			OnRecoil();
+
 	}
 	else {
 		// stop.
