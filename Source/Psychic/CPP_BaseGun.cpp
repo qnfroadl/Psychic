@@ -53,6 +53,11 @@ RPM(600), OnFireHandle(), LastFireTime(0.f)
 		Explosion = PS_EXPLOSION.Object;
 	}
 
+	ConstructorHelpers::FObjectFinder<USoundBase> FIRE_SOUND(TEXT("SoundWave'/Engine/VREditor/Sounds/UI/Camera_Shutter.Camera_Shutter'"));
+	if (FIRE_SOUND.Succeeded())
+	{
+		FireSound = FIRE_SOUND.Object;
+	}
 }
 
 // Called when the game starts or when spawned
@@ -143,6 +148,7 @@ void ACPP_BaseGun::OnReFire()
 	OnFire();
 
 }
+
 void ACPP_BaseGun::OnFire()
 {
 
@@ -159,9 +165,8 @@ void ACPP_BaseGun::OnFire()
 
 	// ServerFireProjectile.
 	
-	FVector CameraDir = GetAdjustedAim();
 	FVector MuzzleLocation = this->SK_Gun->GetSocketLocation(MuzzleSocketName);
-	FVector Direction = CameraDir;
+	FVector Direction = GetAdjustedAim();
 
 
 	// Direction = UKismetMathLibrary::FindLookAtRotation(MuzzleLocation, AimEndLocation).Vector();
@@ -186,22 +191,37 @@ void ACPP_BaseGun::OnFireEffect()
 	//FTransform MuzzleTransform = this->Gun->GetSocketTransform(MuzzleSocketName);
 	FVector MuzzleLocation = this->SK_Gun->GetSocketLocation(MuzzleSocketName);
 
-	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), Explosion, FTransform(FRotator(), MuzzleLocation, FVector(0.1f)), true);
+	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), Explosion, FTransform(FRotator(), MuzzleLocation, FVector(0.02f)), true);
 	// UGameplayStatics::SpawnEmitterAttached(Explosion, this->SK_Gun, MuzzleSocketName);
 }
 
+void ACPP_BaseGun::OnFireSound()
+{
+	UE_LOG(LogTemp, Log, TEXT(__FUNCTION__));
+
+	FVector MuzzleLocation = this->SK_Gun->GetSocketLocation(MuzzleSocketName);
+
+	UGameplayStatics::PlaySoundAtLocation(GetWorld(), FireSound, MuzzleLocation);
+
+}
 void ACPP_BaseGun::OnRecoil()
 {
+	UE_LOG(LogTemp, Log, TEXT(__FUNCTION__));
+
 	AController* Controller = GetInstigatorController();
-	
-	if (Controller && Controller->IsLocalPlayerController())
+	ACPP_BaseCharacter* Shooter = Cast<ACPP_BaseCharacter>(GetInstigator());
+
+	if (Shooter)
 	{
-		APawn* pawn = GetInstigator();
-		
-		// 고정 테스트.
-		pawn->AddControllerYawInput(FMath::RandRange(-0.2f, 0.2f));
-		pawn->AddControllerPitchInput(FMath::RandRange(-0.7f, -0.2f));
+		Shooter->OnFireAnim();
+		if (Controller && Controller->IsLocalPlayerController())
+		{
+			// 반동 고정값 테스트.
+			Shooter->AddControllerYawInput(FMath::RandRange(-0.2f, 0.2f));
+			Shooter->AddControllerPitchInput(FMath::RandRange(-0.2f, -0.1f));
+		}
 	}
+	
 }
 
 void ACPP_BaseGun::SetOwningPawn(APawn* NewOwner)
@@ -219,10 +239,9 @@ void ACPP_BaseGun::OnRep_BurstCounter()
 {
 	if (0 < BurstCounter)
 	{
-			// 애니메이션, 소리, 이펙트, 카메라 흔들림?
+			// 소리, 이펙트, 카메라 흔들림?
 			OnFireEffect();
-			// PlaySound
-			// PlayAnimation
+			OnFireSound();
 			OnRecoil();
 
 	}
@@ -242,6 +261,10 @@ void ACPP_BaseGun::SetRPM(uint32 _RPM)
 FVector ACPP_BaseGun::GetAdjustedAim() const
 {
 	ACPP_BasePlayerController* const PlayerController = GetInstigatorController<ACPP_BasePlayerController>();
+
+	// 카메라가 바라보는 방향의 100미터를 기준점으로 두고 + 비조준시에는 스프레드값(Z,Y) 적용
+	
+
 
 	FVector FinalAim = FVector::ZeroVector;
 	// If we have a player controller use it for the aim

@@ -487,6 +487,14 @@ void ACPP_BaseCharacter::OnRep_SetGun()
 	ScopeCamera->AttachToComponent(BaseGun->SK_Gun, FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("ScopeCamera"));
 }
 
+void ACPP_BaseCharacter::OnFireAnim()
+{
+	if (AnimInstance)
+	{
+		AnimInstance->OnFire();
+	}
+}
+
 void ACPP_BaseCharacter::UpdateCrouchCamera()
 {
 	FVector CurrentOffset = this->SpringArm->SocketOffset;

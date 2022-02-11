@@ -61,6 +61,7 @@ public:
 	void OnReFire();
 
 	void OnFireEffect();
+	void OnFireSound();
 	void OnRecoil();
 
 	void SetOwningPawn(APawn* NewOwner);
@@ -77,13 +78,13 @@ public:
 
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	int CurrentAmmo;
+	int CurrentAmmo;	// 현재 장전된 탄약.
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	int RemainingAmmo;
+	int RemainingAmmo;	// 남은 탄약
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	int MaxMagazine;
+	int MaxMagazine;	//탄창 크기
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	FName MuzzleSocketName;
@@ -100,6 +101,7 @@ public:
 	
 	FTimerHandle OnFireHandle;
 
+	class USoundBase* FireSound;
 
 private:
 	uint32 RPM;

@@ -128,6 +128,8 @@ public:
 	UFUNCTION()
 	void OnRep_SetGun();
 	
+	void OnFireAnim();
+
 private:
 	void UpdateCrouchCamera();
 

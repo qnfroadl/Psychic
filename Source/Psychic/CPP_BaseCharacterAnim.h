@@ -20,6 +20,9 @@ public:
 	void NativeBeginPlay() override;
 	void NativeUpdateAnimation(float DeltaSeconds) override;
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnFire();
+
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	float Speed;
@@ -41,5 +44,4 @@ public:
 
 private:
 	class ACPP_BaseCharacter* BaseCharacter;
-
 };

@@ -9,6 +9,12 @@ UCPP_BaseCharacterAnim::UCPP_BaseCharacterAnim()
 	:Speed(0.f), BaseCharacter(nullptr)
 {
 
+// 	ConstructorHelpers::FObjectFinder<UAnimMontage>FIRE_MONTAGE (TEXT("AnimMontage'/Game/Blueprints/Animation/Fire_Rifle_Hip_Montage.Fire_Rifle_Hip_Montage'"));
+// 	if (FIRE_MONTAGE.Succeeded())
+// 	{
+// 		FireMontage = FIRE_MONTAGE.Object;
+// 	}
+
 }
 
 void UCPP_BaseCharacterAnim::NativeBeginPlay()
